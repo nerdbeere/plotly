@@ -29,6 +29,9 @@ interface UserPlantItem {
   catalogName: string;
   category: string;
   waterIntervalDays: number;
+  fertilizeIntervalDays: number;
+  sunlight: string;
+  description: string;
 }
 
 export default function PlantsPage() {
@@ -91,6 +94,8 @@ export default function PlantsPage() {
     }
   };
 
+  const selectedCatalogItem = catalog.find((plant) => plant.id === selectedPlantId);
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -148,10 +153,18 @@ export default function PlantsPage() {
                     <MapPin className="w-3.5 h-3.5 text-slate-400" />
                     <span>Location: <strong>{plant.location}</strong></span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Droplets className="w-3.5 h-3.5 text-blue-500" />
-                    <span>Water cycle: every <strong>{plant.waterIntervalDays} days</strong></span>
-                  </div>
+                   <div className="flex items-center gap-2">
+                     <Droplets className="w-3.5 h-3.5 text-blue-500" />
+                     <span>Water cycle: every <strong>{plant.waterIntervalDays} days</strong></span>
+                   </div>
+                   <div className="flex items-center gap-2">
+                     <Sun className="w-3.5 h-3.5 text-amber-500" />
+                     <span>Sunlight: <strong className="capitalize">{plant.sunlight.replace("_", " ")}</strong></span>
+                   </div>
+                   <div className="flex items-center gap-2">
+                     <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+                     <span>Feed cycle: every <strong>{plant.fertilizeIntervalDays} days</strong></span>
+                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="w-3.5 h-3.5 text-amber-500" />
                     <span>Planted: {plant.plantedAt}</span>
@@ -207,6 +220,14 @@ export default function PlantsPage() {
                     </button>
                   ))}
                 </div>
+                {selectedCatalogItem && (
+                  <div className="mt-2 rounded-lg bg-emerald-50 border border-emerald-100 p-3 text-xs text-emerald-950">
+                    <p>{selectedCatalogItem.description}</p>
+                    <p className="mt-1 text-emerald-700">
+                      Care: water every {selectedCatalogItem.waterIntervalDays} days, feed every {selectedCatalogItem.fertilizeIntervalDays} days, and provide {selectedCatalogItem.sunlight.replace("_", " ")}.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div>
