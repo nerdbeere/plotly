@@ -3,7 +3,17 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import WeatherWidget from "@/components/WeatherWidget";
-import { CheckCircle2, Clock, Plus, Sprout, ArrowRight, Sparkles, Droplets } from "lucide-react";
+import { CheckCircle2, Clock, Plus, ArrowRight, Sparkles, Droplets, Flame, Leaf, Trophy, LockKeyhole } from "lucide-react";
+
+const badgeIcons = { leaf: Leaf, flame: Flame, trophy: Trophy };
+
+interface BadgeItem {
+  id: string;
+  name: string;
+  description: string;
+  icon: keyof typeof badgeIcons;
+  earned: boolean;
+}
 
 interface TaskItem {
   id: number;
@@ -20,6 +30,7 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [rewardToast, setRewardToast] = useState<string | null>(null);
+  const [badges, setBadges] = useState<BadgeItem[]>([]);
 
   const fetchTasks = () => {
     fetch("/api/tasks")
@@ -34,6 +45,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchTasks();
+    fetch("/api/gamification")
+      .then((res) => res.json())
+      .then((data) => setBadges(Array.isArray(data.badges) ? data.badges : []))
+      .catch(() => {});
   }, []);
 
   const handleComplete = async (taskId: number) => {
@@ -41,8 +56,20 @@ export default function Dashboard() {
       const res = await fetch(`/api/tasks/${taskId}/complete`, { method: "POST" });
       const data = await res.json();
       if (data.earnedXp) {
-        setRewardToast(`+${data.earnedXp} XP Earned! 🌟 (Current Streak: ${data.currentStreak} days)`);
+        setRewardToast(`+${data.earnedXp} XP earned. Current streak: ${data.currentStreak} days`);
         setTimeout(() => setRewardToast(null), 4000);
+      }
+      const gamificationRes = await fetch("/api/gamification");
+      const gamificationData = await gamificationRes.json();
+      if (Array.isArray(gamificationData.badges)) {
+        const newlyEarned = gamificationData.badges.find(
+          (badge: BadgeItem) => badge.earned && !badges.some((current) => current.id === badge.id && current.earned)
+        );
+        if (newlyEarned) {
+          setRewardToast(`${newlyEarned.name} unlocked!`);
+          setTimeout(() => setRewardToast(null), 4000);
+        }
+        setBadges(gamificationData.badges);
       }
       fetchTasks();
     } catch (err) {
@@ -65,6 +92,33 @@ export default function Dashboard() {
 
       {/* Hero / Sensor Overview */}
       <WeatherWidget />
+
+      <section className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-amber-600">Milestones</p>
+            <h2 className="text-lg font-bold text-slate-900 mt-1">Your achievement shelf</h2>
+          </div>
+          <Trophy className="w-6 h-6 text-amber-500" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4">
+          {badges.map((badge) => {
+            const Icon = badgeIcons[badge.icon];
+            return (
+              <div key={badge.id} className={`relative rounded-xl border p-4 transition ${badge.earned ? "border-amber-200 bg-amber-50 badge-unlock" : "border-slate-200 bg-slate-50 opacity-65"}`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 ${badge.earned ? "bg-amber-100 text-amber-600" : "bg-slate-200 text-slate-400"}`}>
+                  {badge.earned ? <Icon className="w-5 h-5" /> : <LockKeyhole className="w-5 h-5" />}
+                </div>
+                <h3 className="text-sm font-bold text-slate-900">{badge.name}</h3>
+                <p className="text-xs text-slate-500 mt-1">{badge.description}</p>
+                <span className={`inline-block mt-3 text-[11px] font-semibold uppercase tracking-wide ${badge.earned ? "text-amber-700" : "text-slate-400"}`}>
+                  {badge.earned ? "Unlocked" : "Locked"}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Quick Action & Stat Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

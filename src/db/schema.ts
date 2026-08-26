@@ -49,6 +49,11 @@ export const gamification = sqliteTable("gamification", {
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
+export const badges = sqliteTable("badges", {
+  id: text("id").primaryKey(),
+  earnedAt: text("earned_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
 export const haSettings = sqliteTable("ha_settings", {
   id: integer("id").primaryKey().default(1),
   baseUrl: text("base_url").notNull().default("http://homeassistant.local:8123"),
@@ -64,4 +69,5 @@ export type Plant = typeof plants.$inferSelect;
 export type UserPlant = typeof userPlants.$inferSelect;
 export type Task = typeof tasks.$inferSelect;
 export type Gamification = typeof gamification.$inferSelect;
+export type Badge = typeof badges.$inferSelect;
 export type HaSettings = typeof haSettings.$inferSelect;
