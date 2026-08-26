@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { tasks, userPlants, plants } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { postponeWateringForRain } from "@/lib/tasks/rain-delay";
 
 export async function GET() {
   try {
+    await postponeWateringForRain();
     const allTasks = db
       .select({
         id: tasks.id,
@@ -54,6 +56,10 @@ export async function POST(req: Request) {
       })
       .returning()
       .get();
+
+    if (taskType === "water") {
+      await postponeWateringForRain();
+    }
 
     return NextResponse.json(newTask, { status: 201 });
   } catch (err: any) {
