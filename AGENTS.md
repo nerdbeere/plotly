@@ -62,18 +62,30 @@ npm run build
 
 ---
 
-## 4. UI & Visual Inspection (Browser CLI)
+## 4. UI & Visual Inspection (Browser CLI & Mandatory Screenshots)
 
-When verifying frontend changes, use the browser CLI or `agent-browser` tool:
-- **Routes to inspect:**
+Whenever UI or frontend components are changed:
+1. **Take Screenshots:** You MUST capture screenshots of the affected pages before completing the task.
+   - Save screenshots to `.screenshots/issue-<id>-<page-name>.png`
+   - Example using `agent-browser`:
+     ```bash
+     agent-browser open http://localhost:3000/
+     agent-browser screenshot .screenshots/dashboard.png
+     ```
+   - Or using Playwright CLI / npx:
+     ```bash
+     npx playwright screenshot --wait-for-timeout=1000 http://localhost:3000/ .screenshots/dashboard.png
+     ```
+2. **Visual Verification Rules:**
+   - Inspect the saved image or DOM elements to confirm layout, colors, responsiveness, and typography.
+   - Verify that interactive elements (buttons, modals, forms) open and submit cleanly.
+   - Attach or reference the screenshot in the GitHub issue closing comment or PR description.
+
+- **Key Routes to Inspect:**
   - `/` (Dashboard: Weather summary, daily tasks, XP bar)
   - `/plants` (My Garden: Plant list, plant details, Add Plant modal)
   - `/reminders` (Tasks: Pending list, custom reminder creation, complete actions)
   - `/settings` (Home Assistant: URL, token, mock mode switch, entity mappings)
-- **Inspection actions:**
-  - Navigate to `http://localhost:3000/`
-  - Verify that buttons are clickable and forms submit correctly
-  - Take screenshot or check DOM text to confirm task completion notifications
 
 ---
 
