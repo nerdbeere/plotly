@@ -15,19 +15,40 @@ This repository is designed for autonomous development by `looper`. Use this gui
 
 ---
 
-## 2. Autonomous Loop Cycle
+## 2. Autonomous Loop Cycle & Project Board Tracking
+
+Progress is tracked on [GitHub Project Board #1](https://github.com/users/nerdbeere/projects/1).
 
 Whenever you pick up a task:
-1. **GitHub Issue Pickup:** Find open issues on `nerdbeere/plotly` or Project Board #1.
-2. **Move Status:** Assign the task to yourself and mark status as `In Progress`.
+1. **Find Task on Board / Issues:**
+   - List open tasks on the project board or repo:
+     ```bash
+     gh project item-list 1 --owner nerdbeere --format json
+     # Or query issues directly:
+     gh issue list --repo nerdbeere/plotly --state open
+     ```
+   - Select the next open task/issue.
+2. **Move Card to `In Progress`:**
+   - Assign the issue to yourself: `gh issue edit <id> --add-assignee "@me"`
+   - Add/update the card status to `In Progress` on Project Board #1:
+     ```bash
+     gh project item-edit --project-id 1 --id <item-id> --field-id <status-field-id> --single-select-option-id <in-progress-id>
+     ```
+   - Post a comment on the issue acknowledging that autonomous work is in progress.
 3. **Scaffold / Edit Code:** Follow existing directory patterns in `src/`.
 4. **Self-Verification Loop:**
    - Run type check & build: `npm run build`
    - Seed or migrate DB if schema changed: `npm run db:seed`
    - Start background server if not already running: `npm run dev &`
    - Inspect API health: `curl -s http://localhost:3000/api/health`
-   - Inspect UI using Browser CLI (`agent-browser` or Playwright)
-5. **Completion:** Commit changes with concise commit messages and close the GitHub issue / move card to `Done`.
+   - Inspect UI using Browser CLI (`agent-browser` or Playwright) and capture mandatory screenshots.
+5. **Move Card to `Done` & Close:**
+   - Commit changes with a concise conventional commit message.
+   - Push to `main` or create a PR.
+   - Close the issue and move the board item to `Done`:
+     ```bash
+     gh issue close <id> --comment "Implemented and visually verified. Moving card to Done."
+     ```
 
 ---
 
