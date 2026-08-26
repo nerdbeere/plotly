@@ -56,6 +56,11 @@ export async function seed() {
       updated_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS badges (
+      id TEXT PRIMARY KEY,
+      earned_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS ha_settings (
       id INTEGER PRIMARY KEY DEFAULT 1,
       base_url TEXT NOT NULL DEFAULT 'http://homeassistant.local:8123',
