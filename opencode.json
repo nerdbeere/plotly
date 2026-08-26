@@ -1,29 +1,63 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "instructions": ["AGENTS.md"],
+  "instructions": [
+    "AGENTS.md"
+  ],
+  "mcp": {
+    "looper-plugins": {
+      "command": [
+        "/Users/hol0008j/Projects/private/looper/target/debug/looper",
+        "mcp-plugins",
+        "--task-id",
+        "gardenplot-pr-reviewer-release",
+        "--tasks-dir",
+        "/Users/hol0008j/.config/looper/tasks",
+        "--logs-dir",
+        "/Users/hol0008j/.config/looper/logs",
+        "--plugins-file",
+        "/Users/hol0008j/.config/looper/plugins.json"
+      ],
+      "enabled": true,
+      "type": "local"
+    },
+    "task-memory": {
+      "command": [
+        "/Users/hol0008j/Projects/private/looper/target/debug/looper",
+        "mcp-memory",
+        "--task-id",
+        "gardenplot-pr-reviewer-release",
+        "--storage-dir",
+        "/Users/hol0008j/.config/looper/memory",
+        "--max-bytes",
+        "5242880"
+      ],
+      "enabled": true,
+      "type": "local"
+    }
+  },
   "permission": {
-    "external_directory": {
-      "/Users/hol0008j/.ssh/plotly": "allow",
-      "/Users/hol0008j/.ssh/plotly.pub": "allow",
-      "/Users/hol0008j/.ssh/**": "ask"
-    },
-    "read": {
-      "/Users/hol0008j/.ssh/plotly": "allow",
-      "/Users/hol0008j/.ssh/plotly.pub": "allow",
-      "*": "allow"
-    },
     "bash": {
-      "ssh *192.168.1.12*": "allow",
-      "ssh -i /Users/hol0008j/.ssh/plotly*": "allow",
-      "scp *192.168.1.12*": "allow",
-      "rsync *192.168.1.12*": "allow",
-      "git *": "allow",
+      "*": "ask",
       "gh *": "allow",
+      "git *": "allow",
+      "node *": "allow",
       "npm *": "allow",
       "npx *": "allow",
-      "node *": "allow",
+      "rsync *192.168.1.12*": "allow",
       "rtk *": "allow",
-      "*": "ask"
+      "scp *192.168.1.12*": "allow",
+      "ssh *192.168.1.12*": "allow",
+      "ssh -i /Users/hol0008j/.ssh/plotly*": "allow"
+    },
+    "external_directory": {
+      "/Users/hol0008j/.ssh/**": "ask",
+      "/Users/hol0008j/.ssh/plotly": "allow",
+      "/Users/hol0008j/.ssh/plotly.pub": "allow"
+    },
+    "read": {
+      "*": "allow",
+      "/Users/hol0008j/.ssh/plotly": "allow",
+      "/Users/hol0008j/.ssh/plotly.pub": "allow"
     }
   }
 }
