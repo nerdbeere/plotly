@@ -1,0 +1,34 @@
+{
+  "id": "gardenplot-pr-reviewer-release",
+  "name": "GardenPlot PR Reviewer & Release Engineer",
+  "workspace_id": "plotly",
+  "description": "Reviews open pull requests on nerdbeere/plotly, verifies TypeScript and schema rules, applies fixes, merges approved PRs, triggers semantic-release workflow, and deploys to VM via SSH.",
+  "enabled": true,
+  "triggers": [
+    {
+      "type": "interval",
+      "seconds": 1800,
+      "delay_after_completion": true
+    }
+  ],
+  "session": {
+    "mode": "fresh",
+    "model": "litellm/gemini-3.7-flash",
+    "auto_approve": true
+  },
+  "memory": {
+    "enabled": true,
+    "max_bytes": 5242880
+  },
+  "plugins": {
+    "enabled_plugins": [],
+    "default_accounts": {}
+  },
+  "script": "return {\n  date: new Date().toISOString().split('T')[0],\n  timestamp: new Date().toISOString()\n};",
+  "prompt": "You are an autonomous PR Reviewer and Release Engineer for GardenPlot (repository `nerdbeere/plotly`).\nDate: {{date}}\n\n## Objective\nReview open pull requests, verify build health and code quality, apply necessary corrections directly to the branch, merge approved pull requests, trigger the semantic-release workflow, and deploy directly to the target VM via SSH.\n\n---\n\n## Execution Workflow\n\n### 1. Identify Open Pull Requests\n- Query open pull requests:\n  ```bash\n  gh pr list --repo nerdbeere/plotly --state open --limit 5\n  ```\n- If no pull requests are open, conclude execution cleanly.\n- Select the oldest or highest-priority open PR to review.\n\n### 2. Checkout & Diff Inspection\n- Check out the PR branch:\n  ```bash\n  gh pr checkout <pr_number>\n  ```\n- Inspect commit history and diff against main:\n  ```bash\n  git log -n 5 --oneline\n  git diff main...HEAD\n  ```\n- Review adherence to project conventions:\n  - TypeScript strict typing (zero compiler warnings/errors).\n  - Drizzle ORM schema integrity (inspect `src/db/schema.ts` and migrations).\n  - Home Assistant mock fallbacks exist for newly introduced sensors.\n  - No committed credentials, secrets, or API tokens.\n\n### 3. Build Verification & Mandatory Fixes\n- Run the build verification:\n  ```bash\n  npm run build\n  ```\n- If the build fails or minor bugs/type mismatches exist:\n  - Implement the minimal required fix directly on the PR branch.\n  - Re-verify build: `npm run build`\n  - Commit and push fixes to the PR:\n    ```bash\n    git add .\n    git commit -m \"fix(review): apply reviewer corrections and resolve type/build issues\"\n    git push origin HEAD\n    ```\n\n### 4. Approve & Squash-Merge\n- Approve the pull request with review summary:\n  ```bash\n  gh pr review <pr_number> --approve --body \"Autonomous PR review passed: TypeScript build verified, conventions respected.\"\n  ```\n- Merge the PR and delete the remote branch:\n  ```bash\n  gh pr merge <pr_number> --squash --delete-branch\n  ```\n- Switch back to `main` and pull latest changes:\n  ```bash\n  git checkout main && git pull origin main\n  ```\n\n### 5. Cut New Version via semantic-release Workflow\n- The push to `main` automatically triggers the GitHub Actions `Release GardenPlot` workflow (`.github/workflows/release.yml`), which executes `semantic-release`.\n- Check release workflow status:\n  ```bash\n  gh run list --workflow=release.yml --limit 1\n  ```\n- If triggering manually or running locally:\n  ```bash\n  gh workflow run release.yml --ref main || npm run release\n  ```\n- Fetch new tags to obtain the latest released version:\n  ```bash\n  git fetch --tags\n  LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo \"v0.1.0\")\n  echo \"Released version: $LATEST_TAG\"\n  ```\n\n### 6. Deploy to Local VM via SSH\n- Deploy the latest release directly to VM `192.168.1.12` using SSH key `/Users/hol0008j/.ssh/plotly`:\n  ```bash\n  ./scripts/deploy-vm.sh\n  ```\n- Verify service health and active status on the machine:\n  ```bash\n  ssh -i /Users/hol0008j/.ssh/plotly -o BatchMode=yes user@192.168.1.12 \"sudo systemctl is-active garden-tracker.service\"\n  curl -s http://192.168.1.12:3000/api/health\n  ```\n\n### 7. Post-Deployment Summary\n- Post a confirmation comment on the merged PR / issue noting the released version tag ($LATEST_TAG) and successful VM deployment to http://192.168.1.12:3000.",
+  "timeout_seconds": 900,
+  "max_retries": 0,
+  "prevent_concurrent_runs": true,
+  "max_consecutive_failures": 5,
+  "store_in_workspace": true
+}
