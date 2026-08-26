@@ -71,6 +71,15 @@ export async function seed() {
       moisture_entities TEXT NOT NULL DEFAULT '[]',
       updated_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS soil_moisture_readings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      entity_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      moisture_percent INTEGER NOT NULL,
+      recorded_at TEXT NOT NULL
+    );
+
   `);
 
   console.log("🌿 Seeding Plant Catalog...");
