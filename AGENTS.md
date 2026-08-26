@@ -137,9 +137,13 @@ When reviewing pull requests autonomously:
 2. Verify build integrity: `npm run build`
 3. If necessary, apply required bug/type fixes and commit to the PR branch.
 4. Approve and merge: `gh pr review <pr_number> --approve` & `gh pr merge <pr_number> --squash --delete-branch`
-5. Cut next semver tag and publish release on `main`:
+5. Trigger semantic-release workflow on `main` to cut the new version:
    ```bash
-   git tag -a vX.Y.Z -m "Release vX.Y.Z"
-   git push origin vX.Y.Z
-   gh release create vX.Y.Z --generate-notes
+   gh workflow run release.yml --ref main || npm run release
+   git fetch --tags
+   ```
+6. Deploy directly to target VM via SSH:
+   ```bash
+   ./scripts/deploy-vm.sh
+   curl -s http://192.168.1.12:3000/api/health
    ```

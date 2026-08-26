@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import WeatherWidget from "@/components/WeatherWidget";
+import SoilMoisturePanel from "@/components/SoilMoisturePanel";
 import { CheckCircle2, Clock, Plus, ArrowRight, Sparkles, Droplets, Flame, Leaf, Trophy, LockKeyhole } from "lucide-react";
 
 const badgeIcons = { leaf: Leaf, flame: Flame, trophy: Trophy };
@@ -92,6 +93,7 @@ export default function Dashboard() {
 
       {/* Hero / Sensor Overview */}
       <WeatherWidget />
+      <SoilMoisturePanel />
 
       <section className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">

@@ -65,9 +65,18 @@ export const haSettings = sqliteTable("ha_settings", {
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
+export const soilMoistureReadings = sqliteTable("soil_moisture_readings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  entityId: text("entity_id").notNull(),
+  name: text("name").notNull(),
+  moisturePercent: integer("moisture_percent").notNull(),
+  recordedAt: text("recorded_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
 export type Plant = typeof plants.$inferSelect;
 export type UserPlant = typeof userPlants.$inferSelect;
 export type Task = typeof tasks.$inferSelect;
 export type Gamification = typeof gamification.$inferSelect;
 export type Badge = typeof badges.$inferSelect;
 export type HaSettings = typeof haSettings.$inferSelect;
+export type SoilMoistureReadingRecord = typeof soilMoistureReadings.$inferSelect;
