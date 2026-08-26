@@ -109,17 +109,30 @@ curl -s http://localhost:3000/api/health | jq
 
 The application is hosted locally on VM `192.168.1.12`.
 
-```bash
-# Sync files to production host
-rsync -avz -e "ssh -i /Users/hol0008j/.ssh/plotly" \
-  --exclude 'node_modules' \
-  --exclude '.next' \
-  --exclude 'garden.db' \
-  . user@192.168.1.12:/opt/garden-tracker/
+### Initial VM setup
 
-# Build and start on target host
-ssh -i /Users/hol0008j/.ssh/plotly user@192.168.1.12 "cd /opt/garden-tracker && npm install && npm run build && systemctl restart garden-tracker"
+Install a supported Node.js LTS release on the VM, then run the bootstrap script as root:
+
+```bash
+sudo ./scripts/setup-vm.sh
 ```
+
+The script creates the restricted `garden-tracker` service account, `/opt/garden-tracker`,
+the systemd unit, and `/etc/garden-tracker/garden-tracker.env`. Set any runtime environment
+values in the latter file before deploying.
+
+### Manual deployment
+
+The deployment script preserves the existing SQLite database, installs production dependencies,
+builds the Next.js app, runs `npm run db:push`, and restarts systemd only after migration succeeds:
+
+```bash
+DEPLOY_USER=user ./scripts/deploy-vm.sh
+```
+
+GitHub Actions deploys every published release. Configure the `production` environment with
+`DEPLOY_HOST`, `DEPLOY_USER`, and `DEPLOY_SSH_KEY` secrets. The workflow also supports a manual
+run from the Actions tab.
 
 ---
 
