@@ -1,0 +1,26 @@
+[Unit]
+Description=GardenPlot smart garden manager
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=garden-tracker
+Group=garden-tracker
+WorkingDirectory=/opt/garden-tracker
+Environment=NODE_ENV=production
+Environment=PORT=3000
+EnvironmentFile=-/etc/garden-tracker/garden-tracker.env
+ExecStart=/usr/bin/npm run start
+Restart=on-failure
+RestartSec=5
+KillSignal=SIGINT
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/garden-tracker
+
+[Install]
+WantedBy=multi-user.target
