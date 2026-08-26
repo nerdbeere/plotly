@@ -128,3 +128,18 @@ Whenever UI or frontend components are changed:
   ```bash
   rsync -avz -e "ssh -i /Users/hol0008j/.ssh/plotly" --exclude 'node_modules' --exclude '.next' --exclude 'garden.db' . user@192.168.1.12:/opt/garden-tracker/
   ```
+
+---
+
+## 7. PR Review & Release Workflow (`pr-reviewer`)
+When reviewing pull requests autonomously:
+1. Fetch and checkout open PR: `gh pr checkout <pr_number>`
+2. Verify build integrity: `npm run build`
+3. If necessary, apply required bug/type fixes and commit to the PR branch.
+4. Approve and merge: `gh pr review <pr_number> --approve` & `gh pr merge <pr_number> --squash --delete-branch`
+5. Cut next semver tag and publish release on `main`:
+   ```bash
+   git tag -a vX.Y.Z -m "Release vX.Y.Z"
+   git push origin vX.Y.Z
+   gh release create vX.Y.Z --generate-notes
+   ```
