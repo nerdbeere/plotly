@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { plants, userPlants, tasks } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
+import { refreshPlantHealth } from "@/lib/tasks/health";
 
 export async function GET() {
   try {
     const catalog = db.select().from(plants).all();
+    refreshPlantHealth();
     const myPlants = db
       .select({
         id: userPlants.id,

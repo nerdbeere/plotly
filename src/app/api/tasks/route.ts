@@ -5,11 +5,13 @@ import { eq, desc } from "drizzle-orm";
 import { postponeWateringForRain } from "@/lib/tasks/rain-delay";
 import { postponeWateringForWetSoil } from "@/lib/tasks/moisture-delay";
 import { sendTaskNotifications } from "@/lib/ha/notify";
+import { refreshPlantHealth } from "@/lib/tasks/health";
 
 export async function GET() {
   try {
     await postponeWateringForRain();
     await postponeWateringForWetSoil();
+    refreshPlantHealth();
     await sendTaskNotifications();
     const allTasks = db
       .select({
@@ -67,6 +69,7 @@ export async function POST(req: Request) {
       await postponeWateringForRain();
       await postponeWateringForWetSoil();
     }
+    refreshPlantHealth();
 
     return NextResponse.json(newTask, { status: 201 });
   } catch (err: any) {
