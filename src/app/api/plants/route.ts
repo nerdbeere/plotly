@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { plants, userPlants, tasks } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export async function GET() {
   try {
@@ -28,7 +28,24 @@ export async function GET() {
       .leftJoin(plants, eq(userPlants.plantId, plants.id))
       .all();
 
-    return NextResponse.json({ catalog, myPlants });
+    const pendingTasks = db
+      .select({ userPlantId: tasks.userPlantId })
+      .from(tasks)
+      .where(and(eq(tasks.completed, 0)))
+      .all();
+    const pendingCountByPlant = new Map<number, number>();
+    for (const t of pendingTasks) {
+      if (t.userPlantId !== null) {
+        pendingCountByPlant.set(t.userPlantId, (pendingCountByPlant.get(t.userPlantId) || 0) + 1);
+      }
+    }
+
+    const myPlantsWithCounts = myPlants.map((p) => ({
+      ...p,
+      pendingTaskCount: pendingCountByPlant.get(p.id) || 0,
+    }));
+
+    return NextResponse.json({ catalog, myPlants: myPlantsWithCounts });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
