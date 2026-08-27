@@ -16,6 +16,10 @@ export async function getHaConfig() {
       rainSensorEntityId: "binary_sensor.rain_sensor",
       moistureEntities: "[]",
       moistureEntityLocations: "{}",
+      notifyEnabled: 0,
+      notifyService: "persistent_notification",
+      quietHoursStart: 22,
+      quietHoursEnd: 7,
       updatedAt: new Date().toISOString(),
     }
   );

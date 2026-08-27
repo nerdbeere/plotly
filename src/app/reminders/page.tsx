@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { CheckCircle2, Droplets, Sparkles, Plus, Calendar, Flower2, Clock } from "lucide-react";
+import { CheckCircle2, Droplets, Sparkles, Plus, Calendar, Flower2, Clock, Bell } from "lucide-react";
 
 interface TaskItem {
   id: number;
@@ -12,6 +12,8 @@ interface TaskItem {
   completed: number;
   completedAt: string | null;
   xpReward: number;
+  lastNotifiedAt: string | null;
+  lastNotifiedDate: string | null;
   plantName: string | null;
   plantLocation: string | null;
 }
@@ -152,11 +154,20 @@ export default function RemindersPage() {
                   </div>
                   <div>
                     <h4 className="font-semibold text-sm text-slate-900">{task.title}</h4>
-                    <p className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
+                    <p className="text-xs text-slate-500 flex items-center gap-2 mt-0.5 flex-wrap">
                       <span>{task.plantName || "General Care"}</span>
                       {task.plantLocation && <span>• {task.plantLocation}</span>}
                       <span>•</span>
                       <span className="text-emerald-600 font-semibold">Due: {task.dueDate}</span>
+                      {task.lastNotifiedDate && (
+                        <span
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 font-semibold"
+                          title={`Last HA notification: ${task.lastNotifiedAt || task.lastNotifiedDate}`}
+                        >
+                          <Bell className="w-3 h-3" />
+                          Notified {task.lastNotifiedDate === new Date().toISOString().split("T")[0] ? "today" : task.lastNotifiedDate}
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>
