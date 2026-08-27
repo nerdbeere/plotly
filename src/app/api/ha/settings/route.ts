@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { haSettings } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { getHaConfig, getGardenWeather, getSoilMoistureReadings } from "@/lib/ha/client";
+import { getHaConfig, getGardenWeather, getSoilMoistureReadings, getMoistureEntityLocations } from "@/lib/ha/client";
 
 export async function GET() {
   try {
     const config = await getHaConfig();
     const weather = await getGardenWeather();
     const moistures = await getSoilMoistureReadings();
+    const moistureEntityLocations = await getMoistureEntityLocations();
 
     return NextResponse.json({
       config: {
@@ -19,6 +20,7 @@ export async function GET() {
         weatherEntityId: config.weatherEntityId,
         rainSensorEntityId: config.rainSensorEntityId,
         moistureEntities: JSON.parse(config.moistureEntities || "[]"),
+        moistureEntityLocations,
       },
       live: {
         weather,
@@ -33,7 +35,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { baseUrl, token, mockMode, weatherEntityId, rainSensorEntityId, moistureEntities } = body;
+    const { baseUrl, token, mockMode, weatherEntityId, rainSensorEntityId, moistureEntities, moistureEntityLocations } = body;
 
     const existing = db.select().from(haSettings).where(eq(haSettings.id, 1)).get();
 
@@ -47,6 +49,7 @@ export async function POST(req: Request) {
     if (weatherEntityId !== undefined) updatePayload.weatherEntityId = weatherEntityId;
     if (rainSensorEntityId !== undefined) updatePayload.rainSensorEntityId = rainSensorEntityId;
     if (moistureEntities !== undefined) updatePayload.moistureEntities = JSON.stringify(moistureEntities);
+    if (moistureEntityLocations !== undefined) updatePayload.moistureEntityLocations = JSON.stringify(moistureEntityLocations);
 
     if (existing) {
       db.update(haSettings).set(updatePayload).where(eq(haSettings.id, 1)).run();
@@ -59,6 +62,7 @@ export async function POST(req: Request) {
         weatherEntityId: weatherEntityId || "weather.forecast_home",
         rainSensorEntityId: rainSensorEntityId || "binary_sensor.rain_sensor",
         moistureEntities: JSON.stringify(moistureEntities || []),
+        moistureEntityLocations: JSON.stringify(moistureEntityLocations || {}),
         updatedAt: new Date().toISOString(),
       }).run();
     }

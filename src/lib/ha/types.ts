@@ -21,3 +21,12 @@ export interface SoilMoistureReading {
   moisturePercent: number;
   status: "dry" | "optimal" | "wet";
 }
+
+export interface MoistureSuggestion {
+  entityId: string;
+  sensorName: string;
+  location: string;
+  plantId: number | null;
+  plantName: string | null;
+  hasOpenTask: boolean;
+}
