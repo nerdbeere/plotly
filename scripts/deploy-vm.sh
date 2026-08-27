@@ -39,7 +39,14 @@ remote "APP_DIR='$APP_DIR' SERVICE_NAME='$SERVICE_NAME' HEALTH_PORT='$HEALTH_POR
 set -euo pipefail
 
 echo '==> Installing release into APP_DIR'
-sudo rsync -a --delete /tmp/garden-tracker-release/ "$APP_DIR/"
+# The staging dir carries no database (excluded from the first rsync), so
+# --delete here must not prune it either: excludes keep the live DB, its WAL/
+# SHM sidecars, and prior backups in APP_DIR across deployments.
+sudo rsync -a --delete \
+  --exclude='garden.db' \
+  --exclude='garden.db-*' \
+  --exclude='garden.db.bak-*' \
+  /tmp/garden-tracker-release/ "$APP_DIR/"
 sudo chown -R garden-tracker:garden-tracker "$APP_DIR"
 sudo rm -rf /tmp/garden-tracker-release
 cd "$APP_DIR"
