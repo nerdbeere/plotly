@@ -50,9 +50,13 @@ export default function WeatherWidget() {
             <h3 className="font-semibold text-lg text-emerald-100 capitalize">
               {weather?.condition.replace(/_/g, " ") || "Garden Conditions"}
             </h3>
-            <p className="text-xs text-emerald-300/80 flex items-center gap-1.5">
-              <Radio className="w-3.5 h-3.5 text-emerald-400" />
-              {weather?.isMock ? "Simulated Home Assistant Sensors (Mock Mode)" : "Live Home Assistant Sensor Feed"}
+            <p className={`text-xs flex items-center gap-1.5 ${weather?.unavailable ? "text-amber-300/90" : "text-emerald-300/80"}`}>
+              <Radio className={`w-3.5 h-3.5 ${weather?.unavailable ? "text-amber-400" : "text-emerald-400"}`} />
+              {weather?.unavailable
+                ? "Home Assistant unavailable — check URL, token & connection"
+                : weather?.isMock
+                  ? "Simulated Home Assistant Sensors (Mock Mode)"
+                  : "Live Home Assistant Sensor Feed"}
             </p>
           </div>
         </div>
@@ -101,7 +105,7 @@ export default function WeatherWidget() {
             <Droplets className="w-3.5 h-3.5 mr-1 text-emerald-400" /> Soil Moisture
           </div>
           <div className="text-xl font-bold">
-            {moistures.length > 0 ? `${moistures[0].moisturePercent}%` : "Optimal"}
+            {moistures.length > 0 ? `${moistures[0].moisturePercent}%` : "No data"}
           </div>
         </div>
       </div>

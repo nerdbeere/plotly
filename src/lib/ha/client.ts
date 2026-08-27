@@ -35,11 +35,28 @@ export async function getMoistureEntityLocations(): Promise<Record<string, strin
   }
 }
 
+export function getUnavailableWeather(): GardenWeather {
+  return {
+    condition: "unknown",
+    temperature: 0,
+    humidity: 0,
+    precipitationForecastTomorrow: 0,
+    isRaining: false,
+    isMock: false,
+    unavailable: true,
+  };
+}
+
 export async function fetchHaEntity(entityId: string): Promise<HAEntityState | null> {
   const config = await getHaConfig();
 
-  if (config.mockMode === 1 || !config.token) {
+  if (config.mockMode === 1) {
     if (entityId.includes("rain")) return getMockRainSensor();
+    return null;
+  }
+
+  // Live mode: never fabricate mock data when no token is configured.
+  if (!config.token) {
     return null;
   }
 
@@ -68,8 +85,13 @@ export async function fetchHaEntity(entityId: string): Promise<HAEntityState | n
 export async function getGardenWeather(): Promise<GardenWeather> {
   const config = await getHaConfig();
 
-  if (config.mockMode === 1 || !config.token) {
+  if (config.mockMode === 1) {
     return getMockWeather();
+  }
+
+  // Live mode: report unavailability honestly instead of falling back to mock data.
+  if (!config.token) {
+    return getUnavailableWeather();
   }
 
   try {
@@ -77,7 +99,7 @@ export async function getGardenWeather(): Promise<GardenWeather> {
     const rainState = await fetchHaEntity(config.rainSensorEntityId);
 
     if (!weatherState) {
-      return getMockWeather();
+      return getUnavailableWeather();
     }
 
     const isRaining = rainState ? rainState.state === "on" : weatherState.state === "rainy" || weatherState.state === "pouring";
@@ -91,15 +113,20 @@ export async function getGardenWeather(): Promise<GardenWeather> {
       isMock: false,
     };
   } catch (err) {
-    return getMockWeather();
+    return getUnavailableWeather();
   }
 }
 
 export async function getSoilMoistureReadings(): Promise<SoilMoistureReading[]> {
   const config = await getHaConfig();
 
-  if (config.mockMode === 1 || !config.token) {
+  if (config.mockMode === 1) {
     return getMockSoilMoistures();
+  }
+
+  // Live mode: never fabricate mock readings when no token is configured.
+  if (!config.token) {
+    return [];
   }
 
   try {
@@ -125,6 +152,7 @@ export async function getSoilMoistureReadings(): Promise<SoilMoistureReading[]> 
     }
     return results;
   } catch (err) {
-    return getMockSoilMoistures();
+    console.error("Soil moisture fetch failed:", err);
+    return [];
   }
 }
