@@ -43,6 +43,8 @@ export async function seed() {
       completed INTEGER NOT NULL DEFAULT 0,
       completed_at TEXT,
       xp_reward INTEGER NOT NULL DEFAULT 10,
+      last_notified_at TEXT,
+      last_notified_date TEXT,
       created_at TEXT NOT NULL
     );
 
@@ -70,6 +72,10 @@ export async function seed() {
       rain_sensor_entity_id TEXT NOT NULL DEFAULT 'binary_sensor.rain_sensor',
       moisture_entities TEXT NOT NULL DEFAULT '[]',
       moisture_entity_locations TEXT NOT NULL DEFAULT '{}',
+      notify_enabled INTEGER NOT NULL DEFAULT 0,
+      notify_service TEXT NOT NULL DEFAULT 'persistent_notification',
+      quiet_hours_start INTEGER NOT NULL DEFAULT 22,
+      quiet_hours_end INTEGER NOT NULL DEFAULT 7,
       updated_at TEXT NOT NULL
     );
 
@@ -89,6 +95,27 @@ export async function seed() {
     console.log("🧩 Added moisture_entity_locations column to ha_settings");
   } catch {
     // Column already exists
+  }
+
+  // Migrate existing databases: add task notification columns
+  const notifyMigrations: Array<[string, string]> = [
+    ["ha_settings.notify_enabled", `ALTER TABLE ha_settings ADD COLUMN notify_enabled INTEGER NOT NULL DEFAULT 0`],
+    [
+      "ha_settings.notify_service",
+      `ALTER TABLE ha_settings ADD COLUMN notify_service TEXT NOT NULL DEFAULT 'persistent_notification'`,
+    ],
+    ["ha_settings.quiet_hours_start", `ALTER TABLE ha_settings ADD COLUMN quiet_hours_start INTEGER NOT NULL DEFAULT 22`],
+    ["ha_settings.quiet_hours_end", `ALTER TABLE ha_settings ADD COLUMN quiet_hours_end INTEGER NOT NULL DEFAULT 7`],
+    ["tasks.last_notified_at", `ALTER TABLE tasks ADD COLUMN last_notified_at TEXT`],
+    ["tasks.last_notified_date", `ALTER TABLE tasks ADD COLUMN last_notified_date TEXT`],
+  ];
+  for (const [column, statement] of notifyMigrations) {
+    try {
+      sqlite.exec(statement);
+      console.log(`🧩 Added ${column} column`);
+    } catch {
+      // Column already exists
+    }
   }
 
   console.log("🌿 Seeding Plant Catalog...");

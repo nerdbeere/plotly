@@ -36,6 +36,8 @@ export const tasks = sqliteTable("tasks", {
   completed: integer("completed").notNull().default(0),
   completedAt: text("completed_at"),
   xpReward: integer("xp_reward").notNull().default(10),
+  lastNotifiedAt: text("last_notified_at"), // ISO timestamp of last HA notification
+  lastNotifiedDate: text("last_notified_date"), // YYYY-MM-DD, dedup: one notification per task per day
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
@@ -63,6 +65,10 @@ export const haSettings = sqliteTable("ha_settings", {
   rainSensorEntityId: text("rain_sensor_entity_id").notNull().default("binary_sensor.rain_sensor"),
   moistureEntities: text("moisture_entities").notNull().default("[]"), // JSON string
   moistureEntityLocations: text("moisture_entity_locations").notNull().default("{}"), // JSON string: entity_id -> garden location
+  notifyEnabled: integer("notify_enabled").notNull().default(0), // 1 = task notifications enabled, 0 = off (default)
+  notifyService: text("notify_service").notNull().default("persistent_notification"), // HA notify target, e.g. "persistent_notification" or "mobile_app_phone"
+  quietHoursStart: integer("quiet_hours_start").notNull().default(22), // local hour 0-23, inclusive start of quiet window
+  quietHoursEnd: integer("quiet_hours_end").notNull().default(7), // local hour 0-23, exclusive end of quiet window
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 

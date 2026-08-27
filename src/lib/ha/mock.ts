@@ -44,3 +44,7 @@ export function getMockSoilMoistures(): SoilMoistureReading[] {
     },
   ];
 }
+
+export function sendMockNotification(title: string, message: string) {
+  console.log(`[Mock Notification] ${title}: ${message}`);
+}

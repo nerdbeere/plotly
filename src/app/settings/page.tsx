@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Server, Key, Radio, Save, CheckCircle, RefreshCw, AlertTriangle, ShieldCheck, MapPin } from "lucide-react";
+import { Server, Key, Radio, Save, CheckCircle, RefreshCw, AlertTriangle, ShieldCheck, MapPin, Bell, Moon, Send } from "lucide-react";
 
 export default function SettingsPage() {
   const [baseUrl, setBaseUrl] = useState("http://homeassistant.local:8123");
@@ -12,6 +12,10 @@ export default function SettingsPage() {
   const [moistureEntitiesStr, setMoistureEntitiesStr] = useState("sensor.soil_moisture_bed_1");
   const [moistureEntityLocations, setMoistureEntityLocations] = useState<Record<string, string>>({});
   const [gardenLocations, setGardenLocations] = useState<string[]>([]);
+  const [notifyEnabled, setNotifyEnabled] = useState(false);
+  const [notifyService, setNotifyService] = useState("persistent_notification");
+  const [quietHoursStart, setQuietHoursStart] = useState(22);
+  const [quietHoursEnd, setQuietHoursEnd] = useState(7);
 
   const moistureEntities = moistureEntitiesStr
     .split(",")
@@ -33,6 +37,10 @@ export default function SettingsPage() {
           setRainSensorEntityId(data.config.rainSensorEntityId);
           setMoistureEntitiesStr((data.config.moistureEntities || []).join(", "));
           setMoistureEntityLocations(data.config.moistureEntityLocations || {});
+          setNotifyEnabled(Boolean(data.config.notifyEnabled));
+          setNotifyService(data.config.notifyService || "persistent_notification");
+          setQuietHoursStart(Number(data.config.quietHoursStart ?? 22));
+          setQuietHoursEnd(Number(data.config.quietHoursEnd ?? 7));
           if (data.config.hasToken) {
             setToken(data.config.token);
           }
@@ -66,6 +74,10 @@ export default function SettingsPage() {
           rainSensorEntityId,
           moistureEntities,
           moistureEntityLocations,
+          notifyEnabled,
+          notifyService,
+          quietHoursStart,
+          quietHoursEnd,
         }),
       });
 
@@ -235,6 +247,79 @@ export default function SettingsPage() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Notifications Section */}
+        <div className="border-t border-slate-100 pt-6 space-y-4">
+          <h3 className="font-bold text-sm text-slate-900 flex items-center gap-1.5">
+            <Bell className="w-4 h-4 text-slate-500" /> Notifications
+          </h3>
+
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Send className="w-5 h-5 text-emerald-600" />
+              <div>
+                <h4 className="font-semibold text-sm text-slate-900">Task Notifications</h4>
+                <p className="text-xs text-slate-500">
+                  Push due and overdue garden tasks to Home Assistant. One notification per task per day; quiet hours defer sends.
+                </p>
+              </div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={notifyEnabled}
+                onChange={(e) => setNotifyEnabled(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="sm:col-span-3">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Notify Service Target</label>
+              <input
+                type="text"
+                value={notifyService}
+                onChange={(e) => setNotifyService(e.target.value)}
+                placeholder="persistent_notification or mobile_app_your_phone"
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-emerald-600 font-mono"
+              />
+              <p className="text-[11px] text-slate-500 mt-1">
+                HA notify target, without the “notify.” prefix. persistent_notification always works and shows in the HA sidebar.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                <Moon className="w-4 h-4 text-slate-500" /> Quiet Hours From (hour)
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="23"
+                value={quietHoursStart}
+                onChange={(e) => setQuietHoursStart(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-emerald-600"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Quiet Hours Until (hour)</label>
+              <input
+                type="number"
+                min="0"
+                max="23"
+                value={quietHoursEnd}
+                onChange={(e) => setQuietHoursEnd(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-emerald-600"
+              />
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            In mock mode, notifications are simulated locally instead of calling Home Assistant — no network calls are made.
+          </p>
         </div>
 
         <div className="flex justify-end pt-4 border-t border-slate-100">

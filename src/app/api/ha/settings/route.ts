@@ -3,6 +3,13 @@ import { db } from "@/db";
 import { haSettings } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getHaConfig, getGardenWeather, getSoilMoistureReadings, getMoistureEntityLocations } from "@/lib/ha/client";
+import { sanitizeNotifyService } from "@/lib/ha/notify";
+
+function clampHour(value: unknown, fallback: number): number {
+  const hour = Number(value);
+  if (!Number.isFinite(hour)) return fallback;
+  return Math.min(23, Math.max(0, Math.round(hour)));
+}
 
 export async function GET() {
   try {
@@ -21,6 +28,10 @@ export async function GET() {
         rainSensorEntityId: config.rainSensorEntityId,
         moistureEntities: JSON.parse(config.moistureEntities || "[]"),
         moistureEntityLocations,
+        notifyEnabled: config.notifyEnabled === 1,
+        notifyService: config.notifyService,
+        quietHoursStart: config.quietHoursStart,
+        quietHoursEnd: config.quietHoursEnd,
       },
       live: {
         weather,
@@ -35,7 +46,19 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { baseUrl, token, mockMode, weatherEntityId, rainSensorEntityId, moistureEntities, moistureEntityLocations } = body;
+    const {
+      baseUrl,
+      token,
+      mockMode,
+      weatherEntityId,
+      rainSensorEntityId,
+      moistureEntities,
+      moistureEntityLocations,
+      notifyEnabled,
+      notifyService,
+      quietHoursStart,
+      quietHoursEnd,
+    } = body;
 
     const existing = db.select().from(haSettings).where(eq(haSettings.id, 1)).get();
 
@@ -50,6 +73,10 @@ export async function POST(req: Request) {
     if (rainSensorEntityId !== undefined) updatePayload.rainSensorEntityId = rainSensorEntityId;
     if (moistureEntities !== undefined) updatePayload.moistureEntities = JSON.stringify(moistureEntities);
     if (moistureEntityLocations !== undefined) updatePayload.moistureEntityLocations = JSON.stringify(moistureEntityLocations);
+    if (notifyEnabled !== undefined) updatePayload.notifyEnabled = notifyEnabled ? 1 : 0;
+    if (notifyService !== undefined) updatePayload.notifyService = sanitizeNotifyService(String(notifyService));
+    if (quietHoursStart !== undefined) updatePayload.quietHoursStart = clampHour(quietHoursStart, 22);
+    if (quietHoursEnd !== undefined) updatePayload.quietHoursEnd = clampHour(quietHoursEnd, 7);
 
     if (existing) {
       db.update(haSettings).set(updatePayload).where(eq(haSettings.id, 1)).run();
@@ -63,6 +90,10 @@ export async function POST(req: Request) {
         rainSensorEntityId: rainSensorEntityId || "binary_sensor.rain_sensor",
         moistureEntities: JSON.stringify(moistureEntities || []),
         moistureEntityLocations: JSON.stringify(moistureEntityLocations || {}),
+        notifyEnabled: notifyEnabled ? 1 : 0,
+        notifyService: notifyService !== undefined ? sanitizeNotifyService(String(notifyService)) : "persistent_notification",
+        quietHoursStart: quietHoursStart !== undefined ? clampHour(quietHoursStart, 22) : 22,
+        quietHoursEnd: quietHoursEnd !== undefined ? clampHour(quietHoursEnd, 7) : 7,
         updatedAt: new Date().toISOString(),
       }).run();
     }

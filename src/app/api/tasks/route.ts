@@ -4,11 +4,13 @@ import { tasks, userPlants, plants } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { postponeWateringForRain } from "@/lib/tasks/rain-delay";
 import { postponeWateringForWetSoil } from "@/lib/tasks/moisture-delay";
+import { sendTaskNotifications } from "@/lib/ha/notify";
 
 export async function GET() {
   try {
     await postponeWateringForRain();
     await postponeWateringForWetSoil();
+    await sendTaskNotifications();
     const allTasks = db
       .select({
         id: tasks.id,
@@ -19,6 +21,8 @@ export async function GET() {
         completed: tasks.completed,
         completedAt: tasks.completedAt,
         xpReward: tasks.xpReward,
+        lastNotifiedAt: tasks.lastNotifiedAt,
+        lastNotifiedDate: tasks.lastNotifiedDate,
         createdAt: tasks.createdAt,
         plantName: userPlants.customName,
         plantLocation: userPlants.location,
