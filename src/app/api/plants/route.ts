@@ -17,9 +17,10 @@ export async function GET() {
         lastFertilizedAt: userPlants.lastFertilizedAt,
         health: userPlants.health,
         notes: userPlants.notes,
-        catalogName: plants.name,
-        category: plants.category,
-        waterIntervalDays: plants.waterIntervalDays,
+         catalogName: plants.name,
+         category: plants.category,
+         description: plants.description,
+         waterIntervalDays: plants.waterIntervalDays,
         fertilizeIntervalDays: plants.fertilizeIntervalDays,
         sunlight: plants.sunlight,
       })
