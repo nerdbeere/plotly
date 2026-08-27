@@ -4,14 +4,19 @@ import { eq } from "drizzle-orm";
 import { getMockWeather, getMockRainSensor, getMockSoilMoistures } from "./mock";
 import { GardenWeather, HAEntityState, SoilMoistureReading } from "./types";
 
+const DEFAULT_HA_URL = "http://homeassistant.local:8123";
+
 export async function getHaConfig() {
   const settings = db.select().from(haSettings).where(eq(haSettings.id, 1)).get();
-  return (
-    settings || {
+  const configuredUrl = process.env.HA_URL?.trim();
+  const configuredToken = process.env.HA_TOKEN?.trim();
+
+  if (!settings) {
+    return {
       id: 1,
-      baseUrl: process.env.HA_URL || "http://homeassistant.local:8123",
-      token: process.env.HA_TOKEN || "",
-      mockMode: 1,
+      baseUrl: configuredUrl || DEFAULT_HA_URL,
+      token: configuredToken || "",
+      mockMode: configuredToken ? 0 : 1,
       weatherEntityId: "weather.forecast_home",
       rainSensorEntityId: "binary_sensor.rain_sensor",
       moistureEntities: "[]",
@@ -21,8 +26,17 @@ export async function getHaConfig() {
       quietHoursStart: 22,
       quietHoursEnd: 7,
       updatedAt: new Date().toISOString(),
-    }
-  );
+    };
+  }
+
+  // Seeded settings contain local defaults. Use deployment credentials when the
+  // database has not been configured yet, without overriding saved UI values.
+  return {
+    ...settings,
+    baseUrl: configuredUrl && settings.baseUrl === DEFAULT_HA_URL ? configuredUrl : settings.baseUrl,
+    token: settings.token || configuredToken || "",
+    mockMode: settings.token || !configuredToken ? settings.mockMode : 0,
+  };
 }
 
 export async function getMoistureEntityLocations(): Promise<Record<string, string>> {
@@ -68,6 +82,7 @@ export async function fetchHaEntity(entityId: string): Promise<HAEntityState | n
         "Content-Type": "application/json",
       },
       next: { revalidate: 60 },
+      signal: AbortSignal.timeout(10_000),
     });
 
     if (!res.ok) {
