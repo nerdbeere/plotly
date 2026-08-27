@@ -42,7 +42,7 @@ export default function RootLayout({
       <body className="antialiased bg-slate-50 text-slate-900 min-h-screen flex flex-col">
         <Header />
         <Navigation />
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-8">
           {children}
         </main>
         <ServiceWorkerRegister />

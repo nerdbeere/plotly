@@ -199,7 +199,7 @@ export default function PlantsPage() {
             <button
               onClick={handleRegenerateSchedule}
               disabled={regenerating}
-              className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+              className="min-h-[44px] px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
             >
               <RefreshCw className={clsx("w-4 h-4", regenerating && "animate-spin")} />
               {regenerating ? "Regenerating..." : "Regenerate schedule"}
@@ -207,7 +207,7 @@ export default function PlantsPage() {
           )}
           <button
             onClick={openAddModal}
-            className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+            className="min-h-[44px] px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 shadow-xs cursor-pointer"
           >
             <Plus className="w-4 h-4" /> Add Plant to Garden
           </button>
@@ -224,7 +224,7 @@ export default function PlantsPage() {
           <p className="text-xs text-slate-500 mt-1 mb-4">Choose from the preset plant catalog to start tracking reminders.</p>
           <button
             onClick={openAddModal}
-            className="px-4 py-2 bg-emerald-700 text-white rounded-lg text-xs font-semibold cursor-pointer"
+            className="min-h-[44px] px-4 py-2 bg-emerald-700 text-white rounded-lg text-xs font-semibold cursor-pointer"
           >
             Add Your First Plant
           </button>
@@ -289,17 +289,17 @@ export default function PlantsPage() {
                     onClick={() => openEditModal(plant)}
                     aria-label={`Edit ${plant.customName}`}
                     title="Edit plant"
-                    className="p-2 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition cursor-pointer"
+                    className="flex items-center justify-center h-11 w-11 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition cursor-pointer"
                   >
-                    <Pencil className="w-4 h-4" />
+                    <Pencil className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => setDeletingPlant(plant)}
                     aria-label={`Remove ${plant.customName}`}
                     title="Remove plant"
-                    className="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
+                    className="flex items-center justify-center h-11 w-11 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-5 h-5" />
                   </button>
                 </div>
               </div>
@@ -394,14 +394,14 @@ export default function PlantsPage() {
                 <button
                   type="button"
                   onClick={closeModals}
-                  className="px-4 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                  className="min-h-[44px] px-4 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold transition cursor-pointer"
+                  className="min-h-[44px] px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold transition cursor-pointer"
                 >
                   {editingPlant ? (submitting ? "Saving..." : "Save Changes") : submitting ? "Adding..." : "Add to Garden"}
                 </button>
@@ -434,7 +434,7 @@ export default function PlantsPage() {
               <button
                 type="button"
                 onClick={closeModals}
-                className="px-4 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                className="min-h-[44px] px-4 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
               >
                 Cancel
               </button>
@@ -442,7 +442,7 @@ export default function PlantsPage() {
                 type="button"
                 onClick={handleDeletePlant}
                 disabled={deleting}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold transition cursor-pointer disabled:opacity-60"
+                className="min-h-[44px] px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold transition cursor-pointer disabled:opacity-60"
               >
                 {deleting ? "Removing..." : "Remove Plant"}
               </button>
