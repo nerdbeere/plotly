@@ -1,6 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { plants, tasks, userPlants } from "@/db/schema";
+import { getGardenWeather } from "@/lib/ha/client";
+import { getEffectiveWateringInterval } from "@/lib/tasks/heat";
 
 export const RECURRENCE_TASK_TYPES = ["water", "fertilize"] as const;
 export type RecurrenceTaskType = (typeof RECURRENCE_TASK_TYPES)[number];
@@ -73,10 +75,10 @@ export function getCatalogIntervals(plantId: string): { waterIntervalDays: numbe
   return catalog ?? null;
 }
 
-export function scheduleNextOccurrence(task: {
+export async function scheduleNextOccurrence(task: {
   userPlantId: number | null;
   taskType: string;
-}, completionDate: Date = new Date()): boolean {
+}, completionDate: Date = new Date()): Promise<boolean> {
   if (!task.userPlantId) return false;
   if (!RECURRENCE_TASK_TYPES.includes(task.taskType as RecurrenceTaskType)) return false;
 
@@ -95,9 +97,16 @@ export function scheduleNextOccurrence(task: {
   if (!intervals) return false;
 
   const taskType = task.taskType as RecurrenceTaskType;
-  const intervalDays =
+  let intervalDays =
     taskType === "water" ? intervals.waterIntervalDays : intervals.fertilizeIntervalDays;
   if (!intervalDays || intervalDays <= 0) return false;
+
+  if (taskType === "water") {
+    const weather = await getGardenWeather();
+    if (!weather.unavailable) {
+      intervalDays = getEffectiveWateringInterval(intervalDays, weather.temperature);
+    }
+  }
 
   // Never create a duplicate open task of the same type for the same plant
   if (hasOpenTask(plant.id, taskType)) return false;
@@ -106,7 +115,7 @@ export function scheduleNextOccurrence(task: {
   return true;
 }
 
-export function regenerateSchedules(now: Date = new Date()): number {
+export async function regenerateSchedules(now: Date = new Date()): Promise<number> {
   const myPlants = db
     .select({
       id: userPlants.id,
@@ -122,9 +131,15 @@ export function regenerateSchedules(now: Date = new Date()): number {
   let created = 0;
   for (const plant of myPlants) {
     for (const taskType of RECURRENCE_TASK_TYPES) {
-      const intervalDays =
+      let intervalDays =
         taskType === "water" ? plant.waterIntervalDays : plant.fertilizeIntervalDays;
       if (!intervalDays || intervalDays <= 0) continue;
+      if (taskType === "water") {
+        const weather = await getGardenWeather();
+        if (!weather.unavailable) {
+          intervalDays = getEffectiveWateringInterval(intervalDays, weather.temperature);
+        }
+      }
       if (hasOpenTask(plant.id, taskType)) continue;
 
       insertRecurringTask(plant.id, plant.customName, taskType, addDays(now, intervalDays));

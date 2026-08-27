@@ -3,7 +3,7 @@ import { regenerateSchedules } from "@/lib/tasks/recurrence";
 
 export async function POST() {
   try {
-    const created = regenerateSchedules();
+    const created = await regenerateSchedules();
     return NextResponse.json({ created });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

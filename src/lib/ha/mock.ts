@@ -3,7 +3,9 @@ import { HAEntityState, GardenWeather, SoilMoistureReading } from "./types";
 export function getMockWeather(): GardenWeather {
   const hour = new Date().getHours();
   // Simulate sunny during day, cool at night
-  const temp = hour >= 9 && hour <= 18 ? 22.5 : 14.0;
+  const defaultTemperature = hour >= 9 && hour <= 18 ? 22.5 : 14.0;
+  const configuredTemperature = Number(process.env.MOCK_WEATHER_TEMPERATURE);
+  const temp = Number.isFinite(configuredTemperature) ? configuredTemperature : defaultTemperature;
   
   return {
     condition: "partlycloudy",

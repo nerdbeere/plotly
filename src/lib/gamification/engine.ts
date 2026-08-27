@@ -82,7 +82,7 @@ export async function completeTaskWithReward(taskId: number) {
   }
 
   // Recurring care schedule: queue the next occurrence for water/fertilize tasks
-  const scheduledNext = scheduleNextOccurrence({ userPlantId: task.userPlantId, taskType: task.taskType }, now);
+  const scheduledNext = await scheduleNextOccurrence({ userPlantId: task.userPlantId, taskType: task.taskType }, now);
 
   // Update gamification stats
   let profile = await getGamificationState();
