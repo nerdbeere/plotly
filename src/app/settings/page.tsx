@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Server, Key, Radio, Save, CheckCircle, RefreshCw, AlertTriangle, ShieldCheck } from "lucide-react";
+import { Server, Key, Radio, Save, CheckCircle, RefreshCw, AlertTriangle, ShieldCheck, MapPin } from "lucide-react";
 
 export default function SettingsPage() {
   const [baseUrl, setBaseUrl] = useState("http://homeassistant.local:8123");
@@ -10,6 +10,13 @@ export default function SettingsPage() {
   const [weatherEntityId, setWeatherEntityId] = useState("weather.forecast_home");
   const [rainSensorEntityId, setRainSensorEntityId] = useState("binary_sensor.rain_sensor");
   const [moistureEntitiesStr, setMoistureEntitiesStr] = useState("sensor.soil_moisture_bed_1");
+  const [moistureEntityLocations, setMoistureEntityLocations] = useState<Record<string, string>>({});
+  const [gardenLocations, setGardenLocations] = useState<string[]>([]);
+
+  const moistureEntities = moistureEntitiesStr
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -25,23 +32,27 @@ export default function SettingsPage() {
           setWeatherEntityId(data.config.weatherEntityId);
           setRainSensorEntityId(data.config.rainSensorEntityId);
           setMoistureEntitiesStr((data.config.moistureEntities || []).join(", "));
+          setMoistureEntityLocations(data.config.moistureEntityLocations || {});
           if (data.config.hasToken) {
             setToken(data.config.token);
           }
         }
       })
       .finally(() => setLoading(false));
+
+    fetch("/api/plants")
+      .then((res) => res.json())
+      .then((data) => {
+        const locations = Array.from(new Set((data.myPlants || []).map((p: { location: string }) => p.location))) as string[];
+        setGardenLocations(locations);
+      })
+      .catch(() => {});
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setStatusMsg(null);
-
-    const moistureEntities = moistureEntitiesStr
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
 
     try {
       const res = await fetch("/api/ha/settings", {
@@ -54,6 +65,7 @@ export default function SettingsPage() {
           weatherEntityId,
           rainSensorEntityId,
           moistureEntities,
+          moistureEntityLocations,
         }),
       });
 
@@ -189,6 +201,40 @@ export default function SettingsPage() {
               className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-emerald-600 font-mono"
             />
           </div>
+
+          {moistureEntities.length > 0 && (
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+              <div className="flex items-center gap-1.5">
+                <MapPin className="w-4 h-4 text-slate-500" />
+                <h4 className="font-semibold text-sm text-slate-900">Moisture Sensor → Garden Location</h4>
+              </div>
+              <p className="text-xs text-slate-500">
+                Map each sensor to a plant location. Watering tasks at the mapped location are postponed while the soil reads optimal/wet,
+                and a watering suggestion appears on the dashboard when it reads dry. Unmapped sensors stay display-only.
+              </p>
+              {moistureEntities.map((entity) => (
+                <div key={entity} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                  <span className="text-xs font-mono text-slate-600 sm:w-64 shrink-0 truncate" title={entity}>
+                    {entity}
+                  </span>
+                  <select
+                    value={moistureEntityLocations[entity] || ""}
+                    onChange={(e) =>
+                      setMoistureEntityLocations((current) => ({ ...current, [entity]: e.target.value }))
+                    }
+                    className="w-full sm:flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-emerald-600 bg-white"
+                  >
+                    <option value="">— Not mapped (display only) —</option>
+                    {gardenLocations.map((location) => (
+                      <option key={location} value={location}>
+                        {location}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end pt-4 border-t border-slate-100">

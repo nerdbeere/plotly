@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AlertTriangle, Droplets, TrendingUp } from "lucide-react";
-import { SoilMoistureReading } from "@/lib/ha/types";
+import { SoilMoistureReading, MoistureSuggestion } from "@/lib/ha/types";
 
 interface HistoryPoint {
   entityId: string;
@@ -14,6 +14,7 @@ interface HistoryPoint {
 interface MoistureData {
   current: SoilMoistureReading[];
   history: HistoryPoint[];
+  suggestions?: MoistureSuggestion[];
 }
 
 function chartPoints(points: HistoryPoint[], entityId: string) {
@@ -28,14 +29,36 @@ function chartPoints(points: HistoryPoint[], entityId: string) {
 
 export default function SoilMoisturePanel() {
   const [data, setData] = useState<MoistureData | null>(null);
+  const [creating, setCreating] = useState<string | null>(null);
+
+  const loadData = () => {
+    fetch("/api/ha/moisture").then((response) => response.json()).then(setData).catch(() => setData({ current: [], history: [] }));
+  };
 
   useEffect(() => {
-    fetch("/api/ha/moisture").then((response) => response.json()).then(setData).catch(() => setData({ current: [], history: [] }));
+    loadData();
   }, []);
+
+  const handleWaterNow = async (suggestion: MoistureSuggestion) => {
+    setCreating(suggestion.entityId);
+    try {
+      await fetch("/api/ha/moisture/water-now", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ location: suggestion.location }),
+      });
+      loadData();
+    } catch {
+      // Keep showing the suggestion; the panel refreshes on next load.
+    } finally {
+      setCreating(null);
+    }
+  };
 
   if (!data) return <div className="h-64 rounded-2xl bg-white border border-slate-200 animate-pulse" />;
 
   const drySensors = data.current.filter((reading) => reading.status === "dry");
+  const suggestions = (data.suggestions || []).filter((suggestion) => !suggestion.hasOpenTask);
 
   return (
     <section className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
@@ -47,6 +70,31 @@ export default function SoilMoisturePanel() {
         </div>
         <TrendingUp className="w-6 h-6 text-blue-500" />
       </div>
+
+      {suggestions.length > 0 && (
+        <div className="mx-6 mt-5 space-y-2">
+          {suggestions.map((suggestion) => (
+            <div key={suggestion.entityId} className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm flex items-center justify-between gap-3">
+              <span className="flex items-center gap-2">
+                <Droplets className="w-4 h-4 shrink-0 text-emerald-600" />
+                <span>
+                  <strong>{suggestion.sensorName}</strong> at <strong>{suggestion.location}</strong> reads dry
+                  {suggestion.plantName ? <> — water <strong>{suggestion.plantName}</strong> now?</> : " — no plant mapped to this location yet."}
+                </span>
+              </span>
+              {suggestion.plantId && (
+                <button
+                  onClick={() => handleWaterNow(suggestion)}
+                  disabled={creating === suggestion.entityId}
+                  className="shrink-0 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-60 text-white rounded-lg text-xs font-semibold transition cursor-pointer"
+                >
+                  {creating === suggestion.entityId ? "Creating..." : "Water now"}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {drySensors.length > 0 && (
         <div className="mx-6 mt-5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm flex items-center gap-2">

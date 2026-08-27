@@ -62,6 +62,7 @@ export const haSettings = sqliteTable("ha_settings", {
   weatherEntityId: text("weather_entity_id").notNull().default("weather.forecast_home"),
   rainSensorEntityId: text("rain_sensor_entity_id").notNull().default("binary_sensor.rain_sensor"),
   moistureEntities: text("moisture_entities").notNull().default("[]"), // JSON string
+  moistureEntityLocations: text("moisture_entity_locations").notNull().default("{}"), // JSON string: entity_id -> garden location
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 

@@ -15,9 +15,20 @@ export async function getHaConfig() {
       weatherEntityId: "weather.forecast_home",
       rainSensorEntityId: "binary_sensor.rain_sensor",
       moistureEntities: "[]",
+      moistureEntityLocations: "{}",
       updatedAt: new Date().toISOString(),
     }
   );
+}
+
+export async function getMoistureEntityLocations(): Promise<Record<string, string>> {
+  const config = await getHaConfig();
+  try {
+    const parsed = JSON.parse(config.moistureEntityLocations || "{}");
+    return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
 }
 
 export async function fetchHaEntity(entityId: string): Promise<HAEntityState | null> {

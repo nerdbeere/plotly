@@ -69,6 +69,7 @@ export async function seed() {
       weather_entity_id TEXT NOT NULL DEFAULT 'weather.forecast_home',
       rain_sensor_entity_id TEXT NOT NULL DEFAULT 'binary_sensor.rain_sensor',
       moisture_entities TEXT NOT NULL DEFAULT '[]',
+      moisture_entity_locations TEXT NOT NULL DEFAULT '{}',
       updated_at TEXT NOT NULL
     );
 
@@ -81,6 +82,14 @@ export async function seed() {
     );
 
   `);
+
+  // Migrate existing databases: add moisture entity location mapping column
+  try {
+    sqlite.exec(`ALTER TABLE ha_settings ADD COLUMN moisture_entity_locations TEXT NOT NULL DEFAULT '{}'`);
+    console.log("🧩 Added moisture_entity_locations column to ha_settings");
+  } catch {
+    // Column already exists
+  }
 
   console.log("🌿 Seeding Plant Catalog...");
 
@@ -325,7 +334,8 @@ export async function seed() {
       mockMode: 1,
       weatherEntityId: "weather.forecast_home",
       rainSensorEntityId: "binary_sensor.rain_sensor",
-      moistureEntities: JSON.stringify(["sensor.soil_moisture_bed_1"]),
+      moistureEntities: JSON.stringify(["sensor.soil_moisture_bed_1", "sensor.soil_moisture_balcony_pot"]),
+      moistureEntityLocations: "{}",
       updatedAt: new Date().toISOString(),
     }).run();
   }
