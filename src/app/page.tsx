@@ -190,7 +190,7 @@ export default function Dashboard() {
             pendingTasks.map((task) => (
               <div
                 key={task.id}
-                className="p-5 flex items-center justify-between hover:bg-slate-50/80 transition"
+                className="p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between hover:bg-slate-50/80 transition"
               >
                 <div className="flex items-center space-x-4">
                   <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100">
@@ -212,13 +212,13 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
                   <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
                     <Sparkles className="w-3 h-3" /> +{task.xpReward} XP
                   </span>
                   <button
                     onClick={() => handleComplete(task.id)}
-                    className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                    className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0 px-4 sm:px-3.5 py-2.5 sm:py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-sm sm:text-xs font-semibold transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
                   >
                     <CheckCircle2 className="w-4 h-4" /> Complete
                   </button>

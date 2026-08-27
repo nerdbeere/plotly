@@ -337,7 +337,7 @@ export default function SettingsPage() {
           <button
             type="submit"
             disabled={saving}
-            className="px-6 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-semibold transition flex items-center gap-2 shadow-xs cursor-pointer"
+            className="min-h-[44px] px-6 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-semibold transition flex items-center gap-2 shadow-xs cursor-pointer"
           >
             <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save Configuration"}
           </button>

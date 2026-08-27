@@ -59,13 +59,13 @@ export default function Header() {
             </div>
 
             {/* Level & XP Progress */}
-            <div className="flex flex-col items-end">
+            <div className="flex flex-col items-end min-w-0">
               <div className="flex items-center space-x-1 text-xs text-emerald-200 mb-1">
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
                 <span className="font-semibold text-white">Level {stats.level}</span>
-                <span className="text-emerald-400">({stats.totalXp} XP)</span>
+                <span className="text-emerald-400 hidden min-[420px]:inline">({stats.totalXp} XP)</span>
               </div>
-              <div className="w-24 sm:w-36 bg-emerald-950 rounded-full h-2 overflow-hidden border border-emerald-700">
+              <div className="w-20 sm:w-36 bg-emerald-950 rounded-full h-2 overflow-hidden border border-emerald-700">
                 <div
                   className="bg-gradient-to-r from-amber-400 to-emerald-400 h-full transition-all duration-500 rounded-full"
                   style={{ width: `${stats.progressPercent}%` }}
