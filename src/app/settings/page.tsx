@@ -122,25 +122,36 @@ export default function SettingsPage() {
 
       <form onSubmit={handleSave} className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 sm:p-8 space-y-6">
         {/* Mock Mode Toggle */}
-        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Radio className="w-5 h-5 text-emerald-600" />
-            <div>
-              <h4 className="font-semibold text-sm text-slate-900">Simulation / Mock Mode</h4>
-              <p className="text-xs text-slate-500">
-                Use built-in mock telemetry during autonomous development loops and testing without hitting live Home Assistant.
-              </p>
+        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Radio className="w-5 h-5 text-emerald-600" />
+              <div>
+                <h4 className="font-semibold text-sm text-slate-900">Simulation / Mock Mode</h4>
+                <p className="text-xs text-slate-500">
+                  Use built-in mock telemetry during autonomous development loops and testing without hitting live Home Assistant.
+                </p>
+              </div>
             </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={mockMode}
+                onChange={(e) => setMockMode(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+            </label>
           </div>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={mockMode}
-              onChange={(e) => setMockMode(e.target.checked)}
-              className="sr-only peer"
-            />
-            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
-          </label>
+          {!mockMode && !token && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 font-semibold">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+              <span>
+                Mock mode is off but no access token is configured — live Home Assistant data is unavailable. Enter your token
+                below, or re-enable mock mode to see simulated data again.
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Server URL */}

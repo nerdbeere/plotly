@@ -13,6 +13,8 @@ export interface GardenWeather {
   precipitationForecastTomorrow: number; // in mm
   isRaining: boolean;
   isMock: boolean;
+  /** True when mock mode is off but no live data could be fetched. */
+  unavailable?: boolean;
 }
 
 export interface SoilMoistureReading {
