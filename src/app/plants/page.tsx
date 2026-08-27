@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Sprout, Plus, MapPin, Calendar, Droplets, Sun, Sparkles, Check } from "lucide-react";
+import { Sprout, Plus, MapPin, Calendar, Droplets, Sun, Sparkles, Check, RefreshCw } from "lucide-react";
 import clsx from "clsx";
 
 interface CatalogItem {
@@ -46,6 +46,8 @@ export default function PlantsPage() {
   const [location, setLocation] = useState("Raised Bed 1");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [regenerateResult, setRegenerateResult] = useState<string | null>(null);
 
   const loadData = () => {
     fetch("/api/plants")
@@ -94,6 +96,26 @@ export default function PlantsPage() {
     }
   };
 
+  const handleRegenerateSchedule = async () => {
+    setRegenerating(true);
+    setRegenerateResult(null);
+    try {
+      const res = await fetch("/api/plants/regenerate-schedule", { method: "POST" });
+      const data = await res.json();
+      setRegenerateResult(
+        res.ok
+          ? `Schedule regenerated — ${data.created} new task${data.created === 1 ? "" : "s"} created.`
+          : "Failed to regenerate schedule."
+      );
+      if (res.ok) loadData();
+    } catch (err) {
+      console.error(err);
+      setRegenerateResult("Failed to regenerate schedule.");
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
   const selectedCatalogItem = catalog.find((plant) => plant.id === selectedPlantId);
 
   return (
@@ -104,12 +126,27 @@ export default function PlantsPage() {
           <h1 className="text-2xl font-bold text-slate-900">My Garden Plants</h1>
           <p className="text-xs text-slate-500 mt-1">Track growth, care schedules, and locations for all active plants</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 shadow-xs cursor-pointer"
-        >
-          <Plus className="w-4 h-4" /> Add Plant to Garden
-        </button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          {regenerateResult && (
+            <span className="text-xs text-slate-500 sm:mr-2 self-center">{regenerateResult}</span>
+          )}
+          {myPlants.length > 0 && (
+            <button
+              onClick={handleRegenerateSchedule}
+              disabled={regenerating}
+              className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+            >
+              <RefreshCw className={clsx("w-4 h-4", regenerating && "animate-spin")} />
+              {regenerating ? "Regenerating..." : "Regenerate schedule"}
+            </button>
+          )}
+          <button
+            onClick={() => setShowModal(true)}
+            className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+          >
+            <Plus className="w-4 h-4" /> Add Plant to Garden
+          </button>
+        </div>
       </div>
 
       {/* Plants Grid */}

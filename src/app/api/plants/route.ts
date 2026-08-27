@@ -81,6 +81,24 @@ export async function POST(req: Request) {
       })
       .run();
 
+    // Auto-create initial fertilizing task based on catalog interval
+    if (plantDef.fertilizeIntervalDays > 0) {
+      const fertilizeDueDate = new Date();
+      fertilizeDueDate.setDate(fertilizeDueDate.getDate() + plantDef.fertilizeIntervalDays);
+
+      db.insert(tasks)
+        .values({
+          userPlantId: newPlant.id,
+          title: `Fertilize ${newPlant.customName}`,
+          taskType: "fertilize",
+          dueDate: fertilizeDueDate.toISOString().split("T")[0],
+          xpReward: 15,
+          completed: 0,
+          createdAt: new Date().toISOString(),
+        })
+        .run();
+    }
+
     return NextResponse.json(newPlant, { status: 201 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
