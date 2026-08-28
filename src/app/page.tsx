@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import WeatherWidget from "@/components/WeatherWidget";
 import SoilMoisturePanel from "@/components/SoilMoisturePanel";
-import { CheckCircle2, Clock, Plus, ArrowRight, Sparkles, Droplets, Flame, Leaf, Trophy, LockKeyhole, CalendarClock } from "lucide-react";
+import { CheckCircle2, Clock, Plus, ArrowRight, Sparkles, Droplets, Flame, Leaf, Trophy, LockKeyhole, AlertTriangle, CalendarClock } from "lucide-react";
 
 const badgeIcons = { leaf: Leaf, flame: Flame, trophy: Trophy };
 
@@ -33,6 +33,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [rewardToast, setRewardToast] = useState<string | null>(null);
   const [badges, setBadges] = useState<BadgeItem[]>([]);
+  const [needsAttention, setNeedsAttention] = useState(0);
 
   const fetchTasks = () => {
     fetch("/api/tasks")
@@ -50,6 +51,10 @@ export default function Dashboard() {
     fetch("/api/gamification")
       .then((res) => res.json())
       .then((data) => setBadges(Array.isArray(data.badges) ? data.badges : []))
+      .catch(() => {});
+    fetch("/api/plants")
+      .then((res) => res.json())
+      .then((data) => setNeedsAttention((data.myPlants || []).filter((plant: { health: string }) => plant.health === "needs_attention").length))
       .catch(() => {});
   }, []);
 
@@ -134,8 +139,8 @@ export default function Dashboard() {
       </section>
 
       {/* Quick Action & Stat Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <Link href="/reminders" className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between hover:border-amber-300 transition">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Pending Reminders</p>
             <h3 className="text-2xl font-bold text-slate-900 mt-1">{pendingTasks.length}</h3>
@@ -143,7 +148,17 @@ export default function Dashboard() {
           <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
             <Clock className="w-6 h-6" />
           </div>
-        </div>
+        </Link>
+
+        <Link href="/plants?health=needs_attention" className="bg-white p-5 rounded-xl border border-amber-200 shadow-xs flex items-center justify-between hover:border-amber-300 transition">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Needs attention</p>
+            <h3 className="text-2xl font-bold text-red-700 mt-1">{needsAttention}</h3>
+          </div>
+          <div className="p-3 bg-red-50 text-red-600 rounded-xl">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+        </Link>
 
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>

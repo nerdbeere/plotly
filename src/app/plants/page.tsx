@@ -24,6 +24,7 @@ interface UserPlantItem {
   location: string;
   plantedAt: string;
   lastWateredAt: string | null;
+  lastFertilizedAt: string | null;
   health: string;
   notes: string | null;
   catalogName: string;
@@ -54,6 +55,7 @@ export default function PlantsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [regenerateResult, setRegenerateResult] = useState<string | null>(null);
+  const [healthFilter, setHealthFilter] = useState<string | null>(null);
   const [lawns, setLawns] = useState<LawnItem[]>([]);
   const [lawnName, setLawnName] = useState("");
   const [lawnSize, setLawnSize] = useState("");
@@ -62,11 +64,12 @@ export default function PlantsPage() {
   const [lawnFeedDays, setLawnFeedDays] = useState(30);
 
   const loadData = () => {
+    const filter = new URLSearchParams(window.location.search).get("health");
     fetch("/api/plants")
       .then((res) => res.json())
       .then((data) => {
         setCatalog(data.catalog || []);
-        setMyPlants(data.myPlants || []);
+        setMyPlants(filter ? (data.myPlants || []).filter((plant: UserPlantItem) => plant.health === filter) : data.myPlants || []);
         if (data.catalog?.length > 0 && !selectedPlantId) {
           setSelectedPlantId(data.catalog[0].id);
           setCustomName(data.catalog[0].name);
@@ -77,6 +80,8 @@ export default function PlantsPage() {
   };
 
   useEffect(() => {
+    const filter = new URLSearchParams(window.location.search).get("health");
+    setHealthFilter(filter);
     loadData();
   }, []);
 
@@ -323,8 +328,11 @@ export default function PlantsPage() {
               </div>
 
               <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="font-semibold text-emerald-700 capitalize flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" /> {plant.health}
+                 <span className={clsx(
+                   "font-semibold capitalize flex items-center gap-1",
+                   plant.health === "needs_attention" ? "text-red-700" : plant.health === "thriving" ? "text-emerald-700" : "text-amber-700"
+                 )}>
+                   <span className={clsx("w-2 h-2 rounded-full", plant.health === "needs_attention" ? "bg-red-500" : plant.health === "thriving" ? "bg-emerald-500" : "bg-amber-500")} /> {plant.health.replace("_", " ")}
                 </span>
                 <div className="flex items-center gap-2">
                   <button
