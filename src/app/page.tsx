@@ -25,6 +25,7 @@ interface TaskItem {
   xpReward: number;
   plantName: string | null;
   plantLocation: string | null;
+  areaName: string | null;
 }
 
 export default function Dashboard() {
@@ -199,7 +200,7 @@ export default function Dashboard() {
                   <div>
                     <h4 className="font-semibold text-sm text-slate-900">{task.title}</h4>
                     <p className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
-                      <span>{task.plantName || "Garden Bed"}</span>
+                       <span>{task.plantName || task.areaName || "Garden Bed"}</span>
                       {task.plantLocation && (
                         <>
                           <span>•</span>

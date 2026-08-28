@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { tasks, userPlants, plants } from "@/db/schema";
+import { tasks, userPlants, plants, gardenAreas } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { postponeWateringForRain } from "@/lib/tasks/rain-delay";
 import { postponeWateringForWetSoil } from "@/lib/tasks/moisture-delay";
@@ -15,6 +15,7 @@ export async function GET() {
       .select({
         id: tasks.id,
         userPlantId: tasks.userPlantId,
+        gardenAreaId: tasks.gardenAreaId,
         title: tasks.title,
         taskType: tasks.taskType,
         dueDate: tasks.dueDate,
@@ -27,10 +28,12 @@ export async function GET() {
         plantName: userPlants.customName,
         plantLocation: userPlants.location,
         plantCategory: plants.category,
+        areaName: gardenAreas.name,
       })
       .from(tasks)
       .leftJoin(userPlants, eq(tasks.userPlantId, userPlants.id))
       .leftJoin(plants, eq(userPlants.plantId, plants.id))
+      .leftJoin(gardenAreas, eq(tasks.gardenAreaId, gardenAreas.id))
       .orderBy(tasks.completed, tasks.dueDate)
       .all();
 
@@ -43,7 +46,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { userPlantId, title, taskType, dueDate, xpReward } = body;
+    const { userPlantId, gardenAreaId, title, taskType, dueDate, xpReward } = body;
 
     if (!title || !taskType || !dueDate) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -53,6 +56,7 @@ export async function POST(req: Request) {
       .insert(tasks)
       .values({
         userPlantId: userPlantId ? Number(userPlantId) : null,
+        gardenAreaId: gardenAreaId ? Number(gardenAreaId) : null,
         title,
         taskType,
         dueDate,

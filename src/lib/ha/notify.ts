@@ -1,6 +1,6 @@
 import { and, eq, isNull, lte, ne, or } from "drizzle-orm";
 import { db } from "@/db";
-import { tasks, userPlants } from "@/db/schema";
+import { gardenAreas, tasks, userPlants } from "@/db/schema";
 import { getHaConfig } from "./client";
 import { sendMockNotification } from "./mock";
 
@@ -78,9 +78,11 @@ export async function sendTaskNotifications(): Promise<NotificationResult> {
         dueDate: tasks.dueDate,
         lastNotifiedDate: tasks.lastNotifiedDate,
         plantName: userPlants.customName,
+        areaName: gardenAreas.name,
       })
       .from(tasks)
       .leftJoin(userPlants, eq(tasks.userPlantId, userPlants.id))
+      .leftJoin(gardenAreas, eq(tasks.gardenAreaId, gardenAreas.id))
       .where(
         and(
           eq(tasks.completed, 0),
@@ -102,7 +104,7 @@ export async function sendTaskNotifications(): Promise<NotificationResult> {
 
     let sent = 0;
     for (const task of dueTasks) {
-      const message = buildMessage(task, task.plantName, today);
+       const message = buildMessage(task, task.plantName || task.areaName, today);
       try {
         if (useMock) {
           sendMockNotification(NOTIFY_TITLE, message);

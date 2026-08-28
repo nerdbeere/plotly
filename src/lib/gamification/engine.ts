@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { gamification, tasks, userPlants } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { scheduleNextOccurrence } from "@/lib/tasks/recurrence";
+import { scheduleNextAreaOccurrence, scheduleNextOccurrence } from "@/lib/tasks/recurrence";
 
 export function calculateLevel(xp: number): { level: number; currentLevelXp: number; nextLevelXp: number; progressPercent: number } {
   // Level threshold: Level 1 = 0-100, Level 2 = 101-250, Level 3 = 251-450, etc.
@@ -82,7 +82,7 @@ export async function completeTaskWithReward(taskId: number) {
   }
 
   // Recurring care schedule: queue the next occurrence for water/fertilize tasks
-  const scheduledNext = await scheduleNextOccurrence({ userPlantId: task.userPlantId, taskType: task.taskType }, now);
+  const scheduledNext = (await scheduleNextOccurrence({ userPlantId: task.userPlantId, taskType: task.taskType }, now)) || scheduleNextAreaOccurrence({ gardenAreaId: task.gardenAreaId, taskType: task.taskType }, now);
 
   // Update gamification stats
   let profile = await getGamificationState();

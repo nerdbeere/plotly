@@ -29,6 +29,8 @@ export async function GET() {
       homeAssistant: {
         mockMode: haConfig.mockMode === 1,
         configured: Boolean(haConfig.token),
+        baseUrl: haConfig.baseUrl,
+        available: !weather.unavailable,
         weatherCondition: weather.condition,
         temperature: weather.temperature,
       },

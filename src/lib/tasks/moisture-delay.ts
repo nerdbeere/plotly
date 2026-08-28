@@ -1,6 +1,6 @@
 import { and, eq, lte } from "drizzle-orm";
 import { db } from "@/db";
-import { tasks, userPlants } from "@/db/schema";
+import { gardenAreas, tasks, userPlants } from "@/db/schema";
 import { getMoistureEntityLocations, getSoilMoistureReadings } from "@/lib/ha/client";
 import { MoistureSuggestion } from "@/lib/ha/types";
 
@@ -35,7 +35,8 @@ async function getLocationsWithOpenWateringTask(): Promise<Set<string>> {
     .where(and(eq(tasks.taskType, "water"), eq(tasks.completed, 0)))
     .all();
 
-  return new Set(openWaterTasks.map((task) => normalizeLocation(task.location)));
+  const areas = db.select({ name: gardenAreas.name }).from(gardenAreas).all();
+  return new Set([...openWaterTasks.map((task) => normalizeLocation(task.location)), ...areas.map((area) => normalizeLocation(area.name))]);
 }
 
 /**
@@ -59,9 +60,12 @@ export async function postponeWateringForWetSoil() {
     .from(tasks)
     .innerJoin(userPlants, eq(tasks.userPlantId, userPlants.id))
     .where(and(eq(tasks.taskType, "water"), eq(tasks.completed, 0), lte(tasks.dueDate, today)))
-    .all();
+    .all()
+    .map((task) => task);
 
-  const toPostpone = dueWateringTasks.filter((task) => wetLocations.has(normalizeLocation(task.location)));
+  const dueAreaTasks = db.select({ id: tasks.id, location: gardenAreas.name }).from(tasks).innerJoin(gardenAreas, eq(tasks.gardenAreaId, gardenAreas.id)).where(and(eq(tasks.taskType, "water"), eq(tasks.completed, 0), lte(tasks.dueDate, today))).all();
+
+  const toPostpone = [...dueWateringTasks, ...dueAreaTasks].filter((task) => wetLocations.has(normalizeLocation(task.location)));
 
   for (const task of toPostpone) {
     db.update(tasks).set({ dueDate: postponedUntil }).where(eq(tasks.id, task.id)).run();
