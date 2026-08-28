@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Sprout, Plus, MapPin, Calendar, Droplets, Sun, Sparkles, Check, RefreshCw, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { Sprout, Plus, MapPin, Calendar, Droplets, Sun, Sparkles, Check, RefreshCw, Pencil, Trash2, AlertTriangle, Fence } from "lucide-react";
 import clsx from "clsx";
 
 interface CatalogItem {
@@ -36,6 +36,8 @@ interface UserPlantItem {
   pendingTaskCount: number;
 }
 
+interface LawnItem { id: number; name: string; sizeSqm: number | null; grassType: string | null; mowIntervalDays: number; fertilizeIntervalDays: number; }
+
 export default function PlantsPage() {
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [myPlants, setMyPlants] = useState<UserPlantItem[]>([]);
@@ -54,6 +56,12 @@ export default function PlantsPage() {
   const [regenerating, setRegenerating] = useState(false);
   const [regenerateResult, setRegenerateResult] = useState<string | null>(null);
   const [healthFilter, setHealthFilter] = useState<string | null>(null);
+  const [lawns, setLawns] = useState<LawnItem[]>([]);
+  const [lawnName, setLawnName] = useState("");
+  const [lawnSize, setLawnSize] = useState("");
+  const [lawnGrassType, setLawnGrassType] = useState("");
+  const [lawnMowDays, setLawnMowDays] = useState(7);
+  const [lawnFeedDays, setLawnFeedDays] = useState(30);
 
   const loadData = () => {
     const filter = new URLSearchParams(window.location.search).get("health");
@@ -68,6 +76,7 @@ export default function PlantsPage() {
         }
       })
       .finally(() => setLoading(false));
+    fetch("/api/lawn").then((res) => res.json()).then(setLawns).catch(() => setLawns([]));
   };
 
   useEffect(() => {
@@ -188,6 +197,21 @@ export default function PlantsPage() {
 
   const selectedCatalogItem = catalog.find((plant) => plant.id === selectedPlantId);
 
+  const addLawn = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const response = await fetch("/api/lawn", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: lawnName, sizeSqm: lawnSize, grassType: lawnGrassType, mowIntervalDays: lawnMowDays, fertilizeIntervalDays: lawnFeedDays }) });
+    if (response.ok) { setLawnName(""); setLawnSize(""); setLawnGrassType(""); loadData(); }
+  };
+
+  const editLawn = async (lawn: LawnItem) => {
+    const name = window.prompt("Lawn name", lawn.name);
+    if (!name?.trim()) return;
+    await fetch("/api/lawn", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: lawn.id, name, sizeSqm: lawn.sizeSqm, grassType: lawn.grassType, mowIntervalDays: lawn.mowIntervalDays, fertilizeIntervalDays: lawn.fertilizeIntervalDays }) });
+    loadData();
+  };
+
+  const removeLawn = async (id: number) => { await fetch("/api/lawn", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) }); loadData(); };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -218,6 +242,24 @@ export default function PlantsPage() {
           </button>
         </div>
       </div>
+
+      <section className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="p-6 border-b border-slate-100 flex items-center gap-3">
+          <div className="p-3 rounded-xl bg-lime-50 text-lime-700"><Fence className="w-5 h-5" /></div>
+          <div><h2 className="text-lg font-bold text-slate-900">Lawn care</h2><p className="text-xs text-slate-500 mt-1">Track recurring mowing and fertilizing for your lawn.</p></div>
+        </div>
+        <div className="p-6 space-y-5">
+          {lawns.map((lawn) => <div key={lawn.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-lime-100 bg-lime-50/50 p-4"><div><h3 className="font-semibold text-slate-900">{lawn.name}</h3><p className="text-xs text-slate-500">{lawn.sizeSqm ? `${lawn.sizeSqm} m² • ` : ""}{lawn.grassType || "Grass type not set"} • mow every {lawn.mowIntervalDays} days • fertilize every {lawn.fertilizeIntervalDays} days</p></div><div className="flex gap-2"><button onClick={() => editLawn(lawn)} className="min-h-[40px] px-3 rounded-lg text-xs font-semibold text-lime-700 hover:bg-lime-100 cursor-pointer">Edit</button><button onClick={() => removeLawn(lawn.id)} className="min-h-[40px] px-3 rounded-lg text-xs font-semibold text-red-600 hover:bg-red-50 cursor-pointer">Remove</button></div></div>)}
+          <form onSubmit={addLawn} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+            <label className="text-xs font-semibold text-slate-700">Name<input required value={lawnName} onChange={(e) => setLawnName(e.target.value)} placeholder="Back lawn" className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg font-normal" /></label>
+            <label className="text-xs font-semibold text-slate-700">Size (m²)<input type="number" min="1" value={lawnSize} onChange={(e) => setLawnSize(e.target.value)} className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg font-normal" /></label>
+            <label className="text-xs font-semibold text-slate-700">Grass type<input value={lawnGrassType} onChange={(e) => setLawnGrassType(e.target.value)} placeholder="Ryegrass" className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg font-normal" /></label>
+            <label className="text-xs font-semibold text-slate-700">Mow every (days)<input type="number" min="1" value={lawnMowDays} onChange={(e) => setLawnMowDays(Number(e.target.value))} className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg font-normal" /></label>
+            <label className="text-xs font-semibold text-slate-700">Feed every (days)<input type="number" min="1" value={lawnFeedDays} onChange={(e) => setLawnFeedDays(Number(e.target.value))} className="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg font-normal" /></label>
+            <button className="min-h-[44px] px-4 py-2 bg-lime-700 hover:bg-lime-800 text-white rounded-lg text-xs font-semibold cursor-pointer sm:col-span-2 lg:col-span-1">Add lawn</button>
+          </form>
+        </div>
+      </section>
 
       {/* Plants Grid */}
       {loading ? (

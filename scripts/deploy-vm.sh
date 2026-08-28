@@ -96,7 +96,7 @@ if sudo test -f "$APP_DIR/garden.db"; then
 fi
 
 echo '==> Applying schema (db:push)'
-sudo -u garden-tracker npm run db:push
+CI=true sudo -u garden-tracker npx drizzle-kit push --force </dev/null || sudo -u garden-tracker npm run db:push -- --force </dev/null
 
 echo '==> Seeding database (idempotent)'
 sudo -u garden-tracker npm run db:seed

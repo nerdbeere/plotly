@@ -1,13 +1,16 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { plants, tasks, userPlants } from "@/db/schema";
+import { gardenAreas, plants, tasks, userPlants } from "@/db/schema";
+import { getGardenWeather } from "@/lib/ha/client";
+import { getEffectiveWateringInterval } from "@/lib/tasks/heat";
 
-export const RECURRENCE_TASK_TYPES = ["water", "fertilize"] as const;
+export const RECURRENCE_TASK_TYPES = ["water", "fertilize", "mow"] as const;
 export type RecurrenceTaskType = (typeof RECURRENCE_TASK_TYPES)[number];
 
 const XP_REWARDS: Record<RecurrenceTaskType, number> = {
   water: 10,
   fertilize: 15,
+  mow: 15,
 };
 
 function toDateOnly(date: Date): string {
@@ -73,10 +76,11 @@ export function getCatalogIntervals(plantId: string): { waterIntervalDays: numbe
   return catalog ?? null;
 }
 
-export function scheduleNextOccurrence(task: {
+export async function scheduleNextOccurrence(task: {
   userPlantId: number | null;
+  gardenAreaId?: number | null;
   taskType: string;
-}, completionDate: Date = new Date()): boolean {
+}, completionDate: Date = new Date()): Promise<boolean> {
   if (!task.userPlantId) return false;
   if (!RECURRENCE_TASK_TYPES.includes(task.taskType as RecurrenceTaskType)) return false;
 
@@ -95,9 +99,16 @@ export function scheduleNextOccurrence(task: {
   if (!intervals) return false;
 
   const taskType = task.taskType as RecurrenceTaskType;
-  const intervalDays =
+  let intervalDays =
     taskType === "water" ? intervals.waterIntervalDays : intervals.fertilizeIntervalDays;
   if (!intervalDays || intervalDays <= 0) return false;
+
+  if (taskType === "water") {
+    const weather = await getGardenWeather();
+    if (!weather.unavailable) {
+      intervalDays = getEffectiveWateringInterval(intervalDays, weather.temperature);
+    }
+  }
 
   // Never create a duplicate open task of the same type for the same plant
   if (hasOpenTask(plant.id, taskType)) return false;
@@ -106,7 +117,18 @@ export function scheduleNextOccurrence(task: {
   return true;
 }
 
-export function regenerateSchedules(now: Date = new Date()): number {
+export function scheduleNextAreaOccurrence(task: { gardenAreaId: number | null; taskType: string }, completionDate: Date = new Date()): boolean {
+  if (!task.gardenAreaId || !["mow", "fertilize", "water"].includes(task.taskType)) return false;
+  const area = db.select().from(gardenAreas).where(eq(gardenAreas.id, task.gardenAreaId)).get();
+  if (!area) return false;
+  const open = db.select({ id: tasks.id }).from(tasks).where(and(eq(tasks.gardenAreaId, area.id), eq(tasks.taskType, task.taskType), eq(tasks.completed, 0))).get();
+  if (open) return false;
+  const interval = task.taskType === "mow" ? area.mowIntervalDays : task.taskType === "fertilize" ? area.fertilizeIntervalDays : area.waterIntervalDays;
+  db.insert(tasks).values({ gardenAreaId: area.id, title: task.taskType === "mow" ? `Mow ${area.name}` : task.taskType === "fertilize" ? `Fertilize ${area.name}` : `Water ${area.name}`, taskType: task.taskType, dueDate: addDays(completionDate, interval), xpReward: task.taskType === "mow" ? 15 : task.taskType === "fertilize" ? 20 : 10, completed: 0, createdAt: new Date().toISOString() }).run();
+  return true;
+}
+
+export async function regenerateSchedules(now: Date = new Date()): Promise<number> {
   const myPlants = db
     .select({
       id: userPlants.id,
@@ -122,14 +144,33 @@ export function regenerateSchedules(now: Date = new Date()): number {
   let created = 0;
   for (const plant of myPlants) {
     for (const taskType of RECURRENCE_TASK_TYPES) {
-      const intervalDays =
+      let intervalDays =
         taskType === "water" ? plant.waterIntervalDays : plant.fertilizeIntervalDays;
       if (!intervalDays || intervalDays <= 0) continue;
+      if (taskType === "water") {
+        const weather = await getGardenWeather();
+        if (!weather.unavailable) {
+          intervalDays = getEffectiveWateringInterval(intervalDays, weather.temperature);
+        }
+      }
       if (hasOpenTask(plant.id, taskType)) continue;
 
       insertRecurringTask(plant.id, plant.customName, taskType, addDays(now, intervalDays));
       created++;
     }
   }
+  const areas = db.select().from(gardenAreas).all();
+  for (const area of areas) {
+    for (const taskType of ["mow", "fertilize", "water"] as const) {
+      if (hasOpenTaskForArea(area.id, taskType)) continue;
+      const interval = taskType === "mow" ? area.mowIntervalDays : taskType === "fertilize" ? area.fertilizeIntervalDays : area.waterIntervalDays;
+      db.insert(tasks).values({ gardenAreaId: area.id, title: taskType === "mow" ? `Mow ${area.name}` : taskType === "fertilize" ? `Fertilize ${area.name}` : `Water ${area.name}`, taskType, dueDate: addDays(now, interval), xpReward: taskType === "mow" ? 15 : taskType === "fertilize" ? 20 : 10, completed: 0, createdAt: new Date().toISOString() }).run();
+      created++;
+    }
+  }
   return created;
+}
+
+function hasOpenTaskForArea(areaId: number, taskType: string): boolean {
+  return Boolean(db.select({ id: tasks.id }).from(tasks).where(and(eq(tasks.gardenAreaId, areaId), eq(tasks.taskType, taskType), eq(tasks.completed, 0))).get());
 }

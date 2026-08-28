@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { CheckCircle2, Droplets, Sparkles, Plus, Calendar, Flower2, Clock, Bell } from "lucide-react";
+import { CheckCircle2, Droplets, Sparkles, Plus, Calendar, Flower2, Clock, Bell, CalendarClock } from "lucide-react";
 
 interface TaskItem {
   id: number;
@@ -16,6 +16,7 @@ interface TaskItem {
   lastNotifiedDate: string | null;
   plantName: string | null;
   plantLocation: string | null;
+  areaName: string | null;
 }
 
 interface UserPlantSimple {
@@ -71,6 +72,15 @@ export default function RemindersPage() {
     }
   };
 
+  const handleSnooze = async (taskId: number) => {
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/snooze`, { method: "POST" });
+      if (res.ok) loadTasks();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!taskTitle) return;
@@ -102,6 +112,12 @@ export default function RemindersPage() {
 
   const pending = tasks.filter((t) => t.completed === 0);
   const completed = tasks.filter((t) => t.completed === 1);
+  const pendingByDate = pending.reduce<Record<string, TaskItem[]>>((groups, task) => {
+    (groups[task.dueDate] ||= []).push(task);
+    return groups;
+  }, {});
+  const pendingDates = Object.keys(pendingByDate).sort();
+  const today = new Date().toISOString().split("T")[0];
 
   return (
     <div className="space-y-8">
@@ -143,7 +159,12 @@ export default function RemindersPage() {
               🎉 No pending tasks! All your plants are happy and watered.
             </div>
           ) : (
-            pending.map((task) => (
+            pendingDates.map((date) => (
+              <React.Fragment key={date}>
+                <div className="px-5 py-3 bg-slate-50 border-y border-slate-100 text-xs font-bold text-slate-600">
+                  {date === today ? "Due today" : date < today ? "Overdue" : `Due ${date}`}
+                </div>
+                {pendingByDate[date].map((task) => (
               <div
                 key={task.id}
                 className="p-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between hover:bg-slate-50 transition"
@@ -155,10 +176,11 @@ export default function RemindersPage() {
                   <div>
                     <h4 className="font-semibold text-sm text-slate-900">{task.title}</h4>
                     <p className="text-xs text-slate-500 flex items-center gap-2 mt-0.5 flex-wrap">
-                      <span>{task.plantName || "General Care"}</span>
+                      <span>{task.plantName || task.areaName || "General Care"}</span>
                       {task.plantLocation && <span>• {task.plantLocation}</span>}
                       <span>•</span>
-                      <span className="text-emerald-600 font-semibold">Due: {task.dueDate}</span>
+                       <span className="text-emerald-600 font-semibold">Due: {task.dueDate}</span>
+                       {task.dueDate > today && <span className="text-slate-500">Snoozed until {task.dueDate}</span>}
                       {task.lastNotifiedDate && (
                         <span
                           className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 font-semibold"
@@ -176,14 +198,22 @@ export default function RemindersPage() {
                   <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
                     <Sparkles className="w-3 h-3" /> +{task.xpReward} XP
                   </span>
-                  <button
-                    onClick={() => handleComplete(task.id)}
+                   <button
+                     onClick={() => handleSnooze(task.id)}
+                     className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0 px-3 sm:px-3.5 py-2.5 sm:py-1.5 border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-lg text-sm sm:text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                   >
+                     <CalendarClock className="w-4 h-4" /> Snooze +1 day
+                   </button>
+                   <button
+                     onClick={() => handleComplete(task.id)}
                     className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0 px-4 sm:px-3.5 py-2.5 sm:py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-sm sm:text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <CheckCircle2 className="w-4 h-4" /> Complete
                   </button>
                 </div>
               </div>
+                ))}
+              </React.Fragment>
             ))
           )}
         </div>

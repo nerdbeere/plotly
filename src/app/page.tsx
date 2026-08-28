@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import WeatherWidget from "@/components/WeatherWidget";
 import SoilMoisturePanel from "@/components/SoilMoisturePanel";
-import { CheckCircle2, Clock, Plus, ArrowRight, Sparkles, Droplets, Flame, Leaf, Trophy, LockKeyhole, AlertTriangle } from "lucide-react";
+import { CheckCircle2, Clock, Plus, ArrowRight, Sparkles, Droplets, Flame, Leaf, Trophy, LockKeyhole, AlertTriangle, CalendarClock } from "lucide-react";
 
 const badgeIcons = { leaf: Leaf, flame: Flame, trophy: Trophy };
 
@@ -25,6 +25,7 @@ interface TaskItem {
   xpReward: number;
   plantName: string | null;
   plantLocation: string | null;
+  areaName: string | null;
 }
 
 export default function Dashboard() {
@@ -83,7 +84,17 @@ export default function Dashboard() {
     }
   };
 
-  const pendingTasks = tasks.filter((t) => t.completed === 0);
+  const handleSnooze = async (taskId: number) => {
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/snooze`, { method: "POST" });
+      if (res.ok) fetchTasks();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const today = new Date().toISOString().split("T")[0];
+  const pendingTasks = tasks.filter((t) => t.completed === 0 && t.dueDate <= today);
   const completedTasks = tasks.filter((t) => t.completed === 1);
 
   return (
@@ -214,7 +225,7 @@ export default function Dashboard() {
                   <div>
                     <h4 className="font-semibold text-sm text-slate-900">{task.title}</h4>
                     <p className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
-                      <span>{task.plantName || "Garden Bed"}</span>
+                       <span>{task.plantName || task.areaName || "Garden Bed"}</span>
                       {task.plantLocation && (
                         <>
                           <span>•</span>
@@ -231,8 +242,14 @@ export default function Dashboard() {
                   <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
                     <Sparkles className="w-3 h-3" /> +{task.xpReward} XP
                   </span>
-                  <button
-                    onClick={() => handleComplete(task.id)}
+                   <button
+                     onClick={() => handleSnooze(task.id)}
+                     className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0 px-3 sm:px-3.5 py-2.5 sm:py-1.5 border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-lg text-sm sm:text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                   >
+                     <CalendarClock className="w-4 h-4" /> Snooze +1 day
+                   </button>
+                   <button
+                     onClick={() => handleComplete(task.id)}
                     className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0 px-4 sm:px-3.5 py-2.5 sm:py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-sm sm:text-xs font-semibold transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
                   >
                     <CheckCircle2 className="w-4 h-4" /> Complete
