@@ -1,5 +1,5 @@
 import { db, sqlite } from "./index";
-import { plants, userPlants, tasks, gamification, haSettings } from "./schema";
+import { plants, userPlants, gardenAreas, tasks, gamification, haSettings } from "./schema";
 import { eq } from "drizzle-orm";
 
 export async function seed() {
@@ -37,6 +37,7 @@ export async function seed() {
     CREATE TABLE IF NOT EXISTS tasks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_plant_id INTEGER REFERENCES user_plants(id),
+      garden_area_id INTEGER REFERENCES garden_areas(id),
       title TEXT NOT NULL,
       task_type TEXT NOT NULL,
       due_date TEXT NOT NULL,
@@ -45,6 +46,18 @@ export async function seed() {
       xp_reward INTEGER NOT NULL DEFAULT 10,
       last_notified_at TEXT,
       last_notified_date TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS garden_areas (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT NOT NULL DEFAULT 'lawn',
+      name TEXT NOT NULL,
+      size_sqm INTEGER,
+      grass_type TEXT,
+      water_interval_days INTEGER NOT NULL DEFAULT 3,
+      mow_interval_days INTEGER NOT NULL DEFAULT 7,
+      fertilize_interval_days INTEGER NOT NULL DEFAULT 30,
       created_at TEXT NOT NULL
     );
 
@@ -108,6 +121,8 @@ export async function seed() {
     ["ha_settings.quiet_hours_end", `ALTER TABLE ha_settings ADD COLUMN quiet_hours_end INTEGER NOT NULL DEFAULT 7`],
     ["tasks.last_notified_at", `ALTER TABLE tasks ADD COLUMN last_notified_at TEXT`],
     ["tasks.last_notified_date", `ALTER TABLE tasks ADD COLUMN last_notified_date TEXT`],
+    ["tasks.garden_area_id", `ALTER TABLE tasks ADD COLUMN garden_area_id INTEGER REFERENCES garden_areas(id)`],
+    ["garden_areas.water_interval_days", `ALTER TABLE garden_areas ADD COLUMN water_interval_days INTEGER NOT NULL DEFAULT 3`],
   ];
   for (const [column, statement] of notifyMigrations) {
     try {

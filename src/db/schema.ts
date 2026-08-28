@@ -27,9 +27,22 @@ export const userPlants = sqliteTable("user_plants", {
   createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
+export const gardenAreas = sqliteTable("garden_areas", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  type: text("type").notNull().default("lawn"),
+  name: text("name").notNull(),
+  sizeSqm: integer("size_sqm"),
+  grassType: text("grass_type"),
+  waterIntervalDays: integer("water_interval_days").notNull().default(3),
+  mowIntervalDays: integer("mow_interval_days").notNull().default(7),
+  fertilizeIntervalDays: integer("fertilize_interval_days").notNull().default(30),
+  createdAt: text("created_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
 export const tasks = sqliteTable("tasks", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   userPlantId: integer("user_plant_id").references(() => userPlants.id),
+  gardenAreaId: integer("garden_area_id").references(() => gardenAreas.id),
   title: text("title").notNull(),
   taskType: text("task_type").notNull(), // water, fertilize, prune, harvest, weed, custom
   dueDate: text("due_date").notNull(), // YYYY-MM-DD
@@ -82,6 +95,7 @@ export const soilMoistureReadings = sqliteTable("soil_moisture_readings", {
 
 export type Plant = typeof plants.$inferSelect;
 export type UserPlant = typeof userPlants.$inferSelect;
+export type GardenArea = typeof gardenAreas.$inferSelect;
 export type Task = typeof tasks.$inferSelect;
 export type Gamification = typeof gamification.$inferSelect;
 export type Badge = typeof badges.$inferSelect;

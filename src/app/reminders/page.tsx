@@ -16,6 +16,7 @@ interface TaskItem {
   lastNotifiedDate: string | null;
   plantName: string | null;
   plantLocation: string | null;
+  areaName: string | null;
 }
 
 interface UserPlantSimple {
@@ -155,7 +156,7 @@ export default function RemindersPage() {
                   <div>
                     <h4 className="font-semibold text-sm text-slate-900">{task.title}</h4>
                     <p className="text-xs text-slate-500 flex items-center gap-2 mt-0.5 flex-wrap">
-                      <span>{task.plantName || "General Care"}</span>
+                      <span>{task.plantName || task.areaName || "General Care"}</span>
                       {task.plantLocation && <span>• {task.plantLocation}</span>}
                       <span>•</span>
                       <span className="text-emerald-600 font-semibold">Due: {task.dueDate}</span>
